@@ -1,0 +1,36 @@
+# Quarto
+/.quarto/
+**/*.quarto_ipynb
+*_cache/
+*.html
+*.rmarkdown
+
+# Otter (Neovim R plugin) hidden buffers
+*.otter.R
+*.otter.py
+*.otter.yml
+*.otter.sh
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# R artifacts
+.Rdata
+.Rhistory
+Rplots.pdf
+
+# uv
+uv.lock
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+*~
+
+# Claude / Serena
+.claude/
+.serena/

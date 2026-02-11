@@ -1,0 +1,16 @@
+format:
+  html:
+    self-contained: true
+    toc: true
+    code-fold: true
+    number-sections: true
+execute:
+  cache: true
+  warning: false
+knitr:
+  opts_chunk:
+    fig.align: "center"
+    warning: false
+    message: true
+    collapse: true
+    echo: true

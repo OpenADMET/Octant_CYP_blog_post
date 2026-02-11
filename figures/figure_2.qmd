@@ -1,0 +1,241 @@
+```{r}
+#| label: fig-2a-evaporation
+#| echo: false
+#| output: false
+
+rwt115_data <- readRDS(here("data", "rds", "RWT115_anno_data_df.RDS"))
+
+fig_2a <- rwt115_data |>
+  filter(total_volume == 6.5) |>
+  ggplot(aes(x = time_min, y = percent_volume, fill = DMSO_percent)) +
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    mapping = aes(color = DMSO_percent, group = DMSO_percent),
+    shape = 21,
+    size = 2,
+    stroke = 0.3,
+    show.legend = TRUE
+  ) +
+  stat_summary(
+    fun = mean,
+    geom = "line",
+    mapping = aes(color = DMSO_percent, group = DMSO_percent),
+    linewidth = 0.8
+  ) +
+  geom_hline(yintercept = 1, color = "black", linetype = "dashed") +
+  scale_y_continuous(
+    labels = scales::label_percent(),
+    breaks = c(.5, .6, 0.7, 0.8, 0.9, 1)
+  ) +
+  labs(
+    x = "Time sitting in Echo-MS (hours)",
+    y = "Well volume"
+  ) +
+  scico::scale_fill_scico(
+    "DMSO (%)",
+    breaks = seq(0, 70, 10),
+    limits = c(0, 70),
+    palette = "lipari",
+    aesthetics = c("fill", "color")
+  ) +
+  scale_x_continuous(breaks = scales::breaks_width(60), labels = \(x) x / 60) +
+  theme(
+    legend.key.height = grid::unit(1, "null"),
+    axis.text.x = element_text(size = rel(1), hjust = 0.5, angle = 0),
+    axis.text.y = element_text(size = rel(1), angle = 0),
+    legend.frame = element_rect(colour = "black", linewidth = 0.5)
+  )
+```
+
+```{r}
+#| label: fig-2b-top-phosphate-activity
+#| echo: false
+#| output: false
+
+rwt92_norm_df <- readRDS(here("data", "rds", "RWT92_norm_data.RDS"))
+
+fig_2b_top <- rwt92_norm_df |>
+  filter(!empty_wells) |>
+  filter(matrix == "no matrix added") |>
+  mutate(
+    condition = case_when(
+      condition == "Control baculosome (-CYP3A4) (no matrix)" ~ "-CYP3A4",
+      .default = condition
+    )
+  ) |>
+  filter(!(baculosome == "control (-CYP3A4)" & MgCl2_mM == 10)) |>
+  mutate(
+    condition = case_when(
+      MgCl2_mM != 0 ~ paste0(condition, " + 10 mM MgCl2"),
+      .default = condition
+    )
+  ) |>
+  ggplot(aes(
+    x = `buffer ionic strength (M)`,
+    y = fc,
+    group = condition,
+    color = condition
+  )) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey") +
+  geom_beeswarm(
+    aes(fill = condition),
+    size = 1.5,
+    shape = 21,
+    color = "white",
+    show.legend = TRUE
+  ) +
+  geom_smooth(linewidth = 0.5, show.legend = FALSE, se = FALSE) +
+  scale_color_manual("", values = c("grey", cbpalette)) +
+  scale_fill_manual("", values = c("grey", cbpalette)) +
+  labs(
+    y = "CYP3A4 activity",
+    x = "KPO4 buffer (mM)"
+  ) +
+  scale_y_continuous(breaks = scales::breaks_width(width = 10)) +
+  scale_x_continuous(
+    breaks = seq(0.01, 0.1, by = 0.03),
+    labels = \(x) 1e3 * x
+  ) +
+  theme(
+    legend.key = element_blank(),
+    legend.position = "top",
+    legend.text = element_text(size = rel(0.7)),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.grid.major.x = element_blank()
+  ) +
+  guides(
+    color = guide_legend(ncol = 1, override.aes = list(size = 4)),
+    fill = guide_legend(ncol = 1, override.aes = list(size = 4))
+  )
+```
+
+```{r}
+#| label: fig-2b-bottom-signal-improvement
+#| echo: false
+#| output: false
+
+rwt112_data <- readRDS(here("data", "rds", "RWT112_anno_data_df.RDS")) |>
+  filter(Plate == "Plate4") |>
+  filter(dilution == 1) |>
+  filter(CYP_conc == "10nM") |>
+  filter(assay_buffer %in% c("100 mM KPO4", "10 mM KPO4 + 10 mM MgCl2")) |>
+  filter(component_lab == "fragments summed") |>
+  filter(drug_M == 5e-6) |>
+  mutate(
+    Sample = case_when(
+      assay_buffer == "100 mM KPO4" ~ "Std CYP reaction",
+      assay_buffer == "10 mM KPO4 + 10 mM MgCl2" ~ "Optimized CYP matrix"
+    )
+  ) |>
+  mutate(
+    common_name = case_when(
+      common_name == "testosterone" ~ "Testosterone",
+      common_name == "midazolam" ~ "Midazolam",
+      .default = common_name
+    )
+  ) |>
+  select(Sample, common_name, drug_M, peak_area)
+
+fold_change_labels <- rwt112_data |>
+  group_by(common_name) |>
+  summarise(
+    std_mean = mean(peak_area[Sample == "Std CYP reaction"]),
+    opt_mean = mean(peak_area[Sample == "Optimized CYP matrix"]),
+    fold_change = signif(opt_mean / std_mean, 2),
+    peak_area = max(opt_mean, std_mean) * 2,
+    Sample = "Optimized CYP matrix",
+    .groups = "drop"
+  )
+
+fig_2b_bottom <- rwt112_data |>
+  mutate(
+    Sample = factor(
+      Sample,
+      levels = c("Std CYP reaction", "Optimized CYP matrix")
+    ),
+    common_name = factor(
+      common_name,
+      levels = c(
+        "Albendazole",
+        "Midazolam",
+        "AdipoRon",
+        "Propranolol",
+        "Conivaptan",
+        "Phenacetin",
+        "Testosterone",
+        "Racecadotril"
+      )
+    )
+  ) |>
+  droplevels() |>
+  ggplot(aes(x = common_name, y = peak_area, fill = Sample)) +
+  stat_summary(
+    position = position_dodge(0.7),
+    geom = "col",
+    fun = "mean",
+    color = "white",
+    width = 0.5
+  ) +
+  geom_beeswarm(
+    shape = 21,
+    color = "white",
+    size = 1,
+    cex = 1,
+    show.legend = FALSE,
+    dodge.width = 0.7
+  ) +
+  geom_label(
+    aes(label = paste0(fold_change, "x"), y = peak_area),
+    data = fold_change_labels,
+    size = 1.5,
+    color = "white",
+    show.legend = FALSE
+  ) +
+  scale_fill_manual("", values = cbpalette) +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    transform = scales::pseudo_log_trans(sigma = 10),
+    breaks = c(0, 1e2, 1e3, 1e4, 1e5)
+  ) +
+  labs(
+    x = NULL,
+    y = "Peak Area",
+    title = NULL
+  ) +
+  theme(
+    legend.position = "top",
+    legend.key = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+```{r}
+#| label: fig-2d-structure
+#| echo: false
+#| output: false
+
+fig_2d <- wrap_elements(
+  grid::rasterGrob(
+    png::readPNG(here("figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png")),
+    interpolate = TRUE
+  )
+)
+```
+
+```{r}
+#| label: figure-2-assembled
+#| echo: false
+#| fig-width: 7
+#| fig-height: 8
+
+fig_2 <- (fig_2a | (fig_2b_top / fig_2b_bottom)) /
+  fig_2d +
+  plot_layout(heights = c(1, 1))
+
+fig_2 +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(size = 16, face = "bold"))
+```
