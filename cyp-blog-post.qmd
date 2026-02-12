@@ -1,0 +1,30 @@
+---
+title: "CYP Data Engine"
+author: "Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi Handly, Sri Kosuri"
+date: today
+format:
+  html:
+    output-file: index.html
+---
+
+{{< include post/_setup_r.qmd >}}
+
+{{< include post/_setup_python.qmd >}}
+
+## Figure 1
+
+{{< include post/figures/figure_1.qmd >}}
+
+{{< include post/figures/figure_1b.qmd >}}
+
+## Figure 2: Assay Development
+
+{{< include post/figures/figure_2.qmd >}}
+
+## Figure 3
+
+{{< include post/figures/figure_3.qmd >}}
+
+## Figure 4
+
+{{< include post/figures/figure_4.qmd >}}

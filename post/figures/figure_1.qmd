@@ -1,0 +1,165 @@
+```{python}
+#| label: figure-1-data
+
+
+from bokeh.layouts import gridplot
+from scipy.stats import gaussian_kde
+
+# --- load data ---
+
+peak_areas = pd.read_csv(
+    repo_root / "data/20260209_CBR-1304-cpds_vs_CYP3A4,2J2_primary_ind-reps_filtered.csv"
+)
+
+cpds = pd.read_csv(
+    repo_root / "data/2025-09-10_selected-cpds.tsv",
+    sep="\t",
+    usecols=["ocnt_batch", "cxsmiles"]
+).drop_duplicates(subset="ocnt_batch")
+
+# --- summarize replicates ---
+
+summary = (
+    peak_areas
+    .groupby(["ocnt_batch", "enzyme", "condition"])["area"]
+    .mean()
+    .reset_index()
+    .pivot_table(index=["ocnt_batch", "enzyme"], columns="condition", values="area")
+    .reset_index()
+)
+
+summary["log2fc"] = np.log2((summary["treatment"] + 1) / (summary["control"] + 1))
+summary["pct_remaining"] = (summary["treatment"] / summary["control"]) * 100
+
+# --- pivot for each metric ---
+
+def pivot_metric(metric):
+    return (
+        summary[["ocnt_batch", "enzyme", metric]]
+        .pivot_table(index="ocnt_batch", columns="enzyme", values=metric)
+        .reset_index()
+        .dropna()
+    )
+
+react_log2 = pivot_metric("log2fc")
+react_pct = pivot_metric("pct_remaining")
+
+# join SMILES
+react_log2 = react_log2.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
+react_pct = react_pct.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
+
+# --- render molecule SVGs ---
+
+def smiles_to_svg(smiles, size=(200, 200)):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return ""
+    d2d = Draw.MolDraw2DSVG(*size)
+    d2d.DrawMolecule(mol)
+    d2d.FinishDrawing()
+    return d2d.GetDrawingText().replace("\n", "")
+
+react_log2["svg"] = react_log2["cxsmiles"].apply(smiles_to_svg)
+react_pct["svg"] = react_pct["cxsmiles"].apply(smiles_to_svg)
+
+# --- helper: scatter + marginal densities ---
+
+TOOLTIPS = """
+<div style="width:220px;">
+    <div>@svg{safe}</div>
+    <div><b>@batch</b></div>
+</div>
+"""
+
+def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
+    x = df[xcol].values
+    y = df[ycol].values
+
+    source = ColumnDataSource(data={
+        "x": x, "y": y,
+        "svg": df["svg"],
+        "batch": df["ocnt_batch"],
+    })
+
+    lo = min(x.min(), y.min()) - abs(min(x.min(), y.min())) * 0.05 - 1
+    hi = max(x.max(), y.max()) + abs(max(x.max(), y.max())) * 0.05 + 1
+
+    # main scatter
+    p = bokeh_figure(
+        width=500, height=500,
+        x_axis_label=xlabel, y_axis_label=ylabel,
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        x_range=(lo, hi), y_range=(lo, hi),
+    )
+    p.scatter("x", "y", source=source, size=6,
+              fill_alpha=0.5, line_color="white", line_width=0.5)
+    p.add_tools(HoverTool(tooltips=TOOLTIPS))
+
+    # marginal top
+    x_kde = gaussian_kde(x)
+    x_grid = np.linspace(lo, hi, 300)
+    x_dens = x_kde(x_grid)
+
+    ph = bokeh_figure(
+        width=p.width, height=120, x_range=p.x_range,
+        title=title, tools="", toolbar_location=None,
+    )
+    ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
+    ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
+    ph.xaxis.visible = False
+    ph.yaxis.visible = False
+    ph.outline_line_color = None
+    ph.grid.visible = False
+    ph.min_border_bottom = 0
+    ph.min_border_left = p.min_border_left
+
+    # marginal right
+    y_kde = gaussian_kde(y)
+    y_grid = np.linspace(lo, hi, 300)
+    y_dens = y_kde(y_grid)
+
+    pv = bokeh_figure(
+        width=120, height=p.height, y_range=p.y_range,
+        tools="", toolbar_location=None,
+    )
+    pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
+    pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
+    pv.xaxis.visible = False
+    pv.yaxis.visible = False
+    pv.outline_line_color = None
+    pv.grid.visible = False
+    pv.min_border_bottom = p.min_border_bottom
+    pv.min_border_left = 0
+
+    layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
+    script, div = components(layout)
+    return HTML(CDN.render() + div + script)
+```
+
+### Panel A (option 1): log2 fold change
+
+```{python}
+#| label: figure-1-log2fc
+
+
+marginal_scatter(
+    react_log2, "CYP3A4", "CYP2J2",
+    xlabel="CYP3A4 log\u2082(treatment / control)",
+    ylabel="CYP2J2 log\u2082(treatment / control)",
+    title="CYP3A4 vs CYP2J2 \u2014 log\u2082 fold change",
+)
+```
+
+### Panel A (option 2): % remaining
+
+```{python}
+#| label: figure-1-pct
+
+
+marginal_scatter(
+    react_pct, "CYP3A4", "CYP2J2",
+    xlabel="CYP3A4 (% remaining)",
+    ylabel="CYP2J2 (% remaining)",
+    title="CYP3A4 vs CYP2J2 \u2014 % remaining",
+)
+```

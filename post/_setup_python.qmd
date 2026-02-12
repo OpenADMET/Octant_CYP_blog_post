@@ -1,0 +1,19 @@
+```{python}
+#| label: python-setup
+#| cache: false
+
+
+import os
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from rdkit import Chem
+from rdkit.Chem import Draw
+from bokeh.plotting import figure as bokeh_figure, show
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.embed import components
+from bokeh.resources import CDN
+from IPython.display import HTML
+
+repo_root = Path(os.environ["REPO_ROOT"])
+```

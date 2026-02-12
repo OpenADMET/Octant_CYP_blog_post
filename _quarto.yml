@@ -1,6 +1,10 @@
+project:
+  output-dir: _site
+  render:
+    - cyp-blog-post.qmd
 format:
   html:
-    self-contained: true
+    # self-contained: true  # re-enable for final publish
     toc: true
     code-fold: true
     number-sections: true

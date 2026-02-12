@@ -1,0 +1,176 @@
+```{python}
+#| label: figure-1b-data
+
+from PIL import Image
+from io import BytesIO
+from bokeh.layouts import gridplot
+from bokeh.models import CustomJSTickFormatter
+from scipy.stats import gaussian_kde
+from concurrent.futures import ThreadPoolExecutor
+import base64
+
+# --- load IC50 data ---
+
+ic50 = pd.read_csv(repo_root / "data/OPA_C3A4TDIA_005_LMO.csv")
+ic50_avg = ic50.groupby("OCNTID").agg(
+    CYP3A4_pIC50=("CYP3A4_pIC50", "mean"),
+    smiles=("smiles", "first"),
+).reset_index()
+
+# --- load reactivity data & compute CYP3A4 % remaining ---
+
+peak_areas_b = pd.read_csv(
+    repo_root / "data/20260209_CBR-1304-cpds_vs_CYP3A4,2J2_primary_ind-reps_filtered.csv"
+)
+
+react_b = (
+    peak_areas_b[peak_areas_b["enzyme"] == "CYP3A4"]
+    .groupby(["ocnt_batch", "condition"])["area"]
+    .mean()
+    .reset_index()
+    .pivot_table(index="ocnt_batch", columns="condition", values="area")
+    .reset_index()
+)
+react_b["pct_remaining"] = (react_b["treatment"] / react_b["control"]) * 100
+
+# --- join IC50 + reactivity ---
+
+panel_b = ic50_avg.merge(
+    react_b[["ocnt_batch", "pct_remaining"]],
+    left_on="OCNTID", right_on="ocnt_batch",
+    how="inner",
+).dropna()
+
+# convert pIC50 to IC50 (molar)
+panel_b["IC50_M"] = 10 ** (-panel_b["CYP3A4_pIC50"])
+
+# --- molecule SVGs ---
+
+def smiles_to_svg(smiles, size=(150, 150)):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return ""
+    d2d = Draw.MolDraw2DSVG(*size)
+    d2d.DrawMolecule(mol)
+    d2d.FinishDrawing()
+    return d2d.GetDrawingText().replace("\n", "")
+
+panel_b["svg"] = panel_b["smiles"].apply(smiles_to_svg)
+
+# --- DRC plot thumbnails as base64 (parallelized) ---
+
+def png_to_base64_thumb(batch_id, width=300):
+    path = repo_root / f"data/drc-plots/{batch_id}_c7111_no-ctrls.png"
+    if not path.exists():
+        return ""
+    img = Image.open(path)
+    ratio = width / img.width
+    img = img.resize((width, int(img.height * ratio)), Image.LANCZOS)
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=70)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/webp;base64,{b64}"
+
+with ThreadPoolExecutor() as pool:
+    panel_b["drc_img"] = list(pool.map(png_to_base64_thumb, panel_b["OCNTID"]))
+```
+
+### Panel B: CYP3A4 inhibition vs reactivity
+
+```{python}
+#| label: figure-1b-plot
+
+x = panel_b["IC50_M"].values
+y = panel_b["pct_remaining"].values
+
+source_b = ColumnDataSource(data={
+    "x": x,
+    "y": y,
+    "svg": panel_b["svg"],
+    "drc_img": panel_b["drc_img"],
+    "batch": panel_b["OCNTID"],
+})
+
+TOOLTIPS_B = """
+<div style="width:380px;">
+    <div style="display:flex; align-items:start; gap:6px;">
+        <div>@svg{safe}</div>
+        <div><img src="@drc_img{safe}" width="200"></div>
+    </div>
+    <div><b>@batch</b></div>
+</div>
+"""
+
+lo_y = min(y.min(), 0) - 5
+hi_y = max(y.max(), 105) + 5
+
+# SI molar tick formatter
+si_formatter = CustomJSTickFormatter(code="""
+    const v = tick;
+    if (v >= 1)       return v.toFixed(0) + ' M';
+    if (v >= 1e-3)    return (v * 1e3).toFixed(0) + ' mM';
+    if (v >= 1e-6)    return (v * 1e6).toFixed(0) + ' µM';
+    if (v >= 1e-9)    return (v * 1e9).toFixed(0) + ' nM';
+    if (v >= 1e-12)   return (v * 1e12).toFixed(0) + ' pM';
+    return v.toExponential(1) + ' M';
+""")
+
+# --- main scatter ---
+p = bokeh_figure(
+    width=500, height=500,
+    x_axis_label="CYP3A4 IC50",
+    y_axis_label="CYP3A4 (% remaining)",
+    x_axis_type="log",
+    tools="pan,wheel_zoom,box_zoom,reset,save",
+    y_range=(lo_y, hi_y),
+)
+p.xaxis.formatter = si_formatter
+p.scatter("x", "y", source=source_b, size=6,
+          fill_alpha=0.5, line_color="white", line_width=0.5)
+p.add_tools(HoverTool(tooltips=TOOLTIPS_B))
+
+# --- marginal density: top (IC50, log-space) ---
+log_x = np.log10(x)
+x_kde = gaussian_kde(log_x)
+log_grid = np.linspace(log_x.min() - 0.3, log_x.max() + 0.3, 300)
+x_grid = 10 ** log_grid
+x_dens = x_kde(log_grid)
+
+ph = bokeh_figure(
+    width=p.width, height=120, x_range=p.x_range,
+    x_axis_type="log",
+    title="CYP3A4 Inhibition vs Reactivity",
+    tools="", toolbar_location=None,
+)
+ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
+ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
+ph.xaxis.visible = False
+ph.yaxis.visible = False
+ph.outline_line_color = None
+ph.grid.visible = False
+ph.min_border_bottom = 0
+ph.min_border_left = p.min_border_left
+
+# --- marginal density: right (% remaining) ---
+y_kde = gaussian_kde(y)
+y_grid = np.linspace(lo_y, hi_y, 300)
+y_dens = y_kde(y_grid)
+
+pv = bokeh_figure(
+    width=120, height=p.height, y_range=p.y_range,
+    tools="", toolbar_location=None,
+)
+pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
+pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
+pv.xaxis.visible = False
+pv.yaxis.visible = False
+pv.outline_line_color = None
+pv.grid.visible = False
+pv.min_border_bottom = p.min_border_bottom
+pv.min_border_left = 0
+
+# --- layout ---
+layout_b = gridplot([[ph, None], [p, pv]], merge_tools=False)
+script, div = components(layout_b)
+HTML(CDN.render() + div + script)
+```

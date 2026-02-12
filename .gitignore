@@ -2,6 +2,8 @@
 /.quarto/
 **/*.quarto_ipynb
 *_cache/
+*_files/
+_site/
 *.html
 *.rmarkdown
 
@@ -23,6 +25,9 @@ Rplots.pdf
 
 # uv
 uv.lock
+
+# Large data assets
+data/drc-plots/
 
 # macOS
 .DS_Store

@@ -1,7 +1,8 @@
 ```{r}
 #| label: fig-2a-evaporation
-#| echo: false
+
 #| output: false
+#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT115_anno_data_df.RDS")))
 
 rwt115_data <- readRDS(here("data", "rds", "RWT115_anno_data_df.RDS"))
 
@@ -50,8 +51,9 @@ fig_2a <- rwt115_data |>
 
 ```{r}
 #| label: fig-2b-top-phosphate-activity
-#| echo: false
+
 #| output: false
+#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT92_norm_data.RDS")))
 
 rwt92_norm_df <- readRDS(here("data", "rds", "RWT92_norm_data.RDS"))
 
@@ -112,8 +114,9 @@ fig_2b_top <- rwt92_norm_df |>
 
 ```{r}
 #| label: fig-2b-bottom-signal-improvement
-#| echo: false
+
 #| output: false
+#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT112_anno_data_df.RDS")))
 
 rwt112_data <- readRDS(here("data", "rds", "RWT112_anno_data_df.RDS")) |>
   filter(Plate == "Plate4") |>
@@ -214,12 +217,13 @@ fig_2b_bottom <- rwt112_data |>
 
 ```{r}
 #| label: fig-2d-structure
-#| echo: false
+
 #| output: false
+#| cache.extra: !expr tools::md5sum(here("post", "figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png"))
 
 fig_2d <- wrap_elements(
   grid::rasterGrob(
-    png::readPNG(here("figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png")),
+    png::readPNG(here("post", "figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png")),
     interpolate = TRUE
   )
 )
@@ -227,9 +231,10 @@ fig_2d <- wrap_elements(
 
 ```{r}
 #| label: figure-2-assembled
-#| echo: false
+
 #| fig-width: 7
 #| fig-height: 8
+#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT115_anno_data_df.RDS")), tools::md5sum(here("data", "rds", "RWT92_norm_data.RDS")), tools::md5sum(here("data", "rds", "RWT112_anno_data_df.RDS")), tools::md5sum(here("post", "figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png")))
 
 fig_2 <- (fig_2a | (fig_2b_top / fig_2b_bottom)) /
   fig_2d +
