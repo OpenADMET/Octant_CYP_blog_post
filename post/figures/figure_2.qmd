@@ -1,246 +1,302 @@
-```{r}
-#| label: fig-2a-evaporation
+```{python}
+#| label: figure-2-data
+#| cache: false
 
-#| output: false
-#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT115_anno_data_df.RDS")))
 
-rwt115_data <- readRDS(here("data", "rds", "RWT115_anno_data_df.RDS"))
+from bokeh.layouts import gridplot
+from scipy.stats import gaussian_kde
 
-fig_2a <- rwt115_data |>
-  filter(total_volume == 6.5) |>
-  ggplot(aes(x = time_min, y = percent_volume, fill = DMSO_percent)) +
-  stat_summary(
-    fun = mean,
-    geom = "point",
-    mapping = aes(color = DMSO_percent, group = DMSO_percent),
-    shape = 21,
-    size = 2,
-    stroke = 0.3,
-    show.legend = TRUE
-  ) +
-  stat_summary(
-    fun = mean,
-    geom = "line",
-    mapping = aes(color = DMSO_percent, group = DMSO_percent),
-    linewidth = 0.8
-  ) +
-  geom_hline(yintercept = 1, color = "black", linetype = "dashed") +
-  scale_y_continuous(
-    labels = scales::label_percent(),
-    breaks = c(.5, .6, 0.7, 0.8, 0.9, 1)
-  ) +
-  labs(
-    x = "Time sitting in Echo-MS (hours)",
-    y = "Well volume"
-  ) +
-  scico::scale_fill_scico(
-    "DMSO (%)",
-    breaks = seq(0, 70, 10),
-    limits = c(0, 70),
-    palette = "lipari",
-    aesthetics = c("fill", "color")
-  ) +
-  scale_x_continuous(breaks = scales::breaks_width(60), labels = \(x) x / 60) +
-  theme(
-    legend.key.height = grid::unit(1, "null"),
-    axis.text.x = element_text(size = rel(1), hjust = 0.5, angle = 0),
-    axis.text.y = element_text(size = rel(1), angle = 0),
-    legend.frame = element_rect(colour = "black", linewidth = 0.5)
-  )
+# --- load data (pre-filtered by scripts/prepare_data.py) ---
+
+peak_areas = pd.read_csv(repo_root / "data/reactivity.csv")
+
+cpds = peak_areas[["ocnt_batch", "cxsmiles"]].drop_duplicates(subset="ocnt_batch")
+
+# --- summarize replicates ---
+
+summary = (
+    peak_areas
+    .groupby(["ocnt_batch", "enzyme", "condition"])["area"]
+    .mean()
+    .reset_index()
+    .pivot_table(index=["ocnt_batch", "enzyme"], columns="condition", values="area")
+    .reset_index()
+)
+
+summary["log2fc"] = np.log2((summary["treatment"] + 1) / (summary["control"] + 1))
+summary["pct_remaining"] = (summary["treatment"] / summary["control"]) * 100
+
+# --- pivot for each metric ---
+
+def pivot_metric(metric):
+    return (
+        summary[["ocnt_batch", "enzyme", metric]]
+        .pivot_table(index="ocnt_batch", columns="enzyme", values=metric)
+        .reset_index()
+        .dropna()
+    )
+
+react_log2 = pivot_metric("log2fc")
+react_pct = pivot_metric("pct_remaining")
+
+# join SMILES
+react_log2 = react_log2.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
+react_pct = react_pct.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
+
+# --- render molecule SVGs ---
+
+def smiles_to_svg(smiles, size=(200, 200)):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return ""
+    d2d = Draw.MolDraw2DSVG(*size)
+    d2d.DrawMolecule(mol)
+    d2d.FinishDrawing()
+    return d2d.GetDrawingText().replace("\n", "")
+
+react_log2["svg"] = react_log2["cxsmiles"].apply(smiles_to_svg)
+react_pct["svg"] = react_pct["cxsmiles"].apply(smiles_to_svg)
+
+# --- swarmplot SVGs for tooltips ---
+
+def _fmt_area(v):
+    """Compact number format for peak-area tick labels."""
+    if v == 0:
+        return "0"
+    if v >= 1e6:
+        return f"{v / 1e6:.0f}M" if v % 1e6 == 0 else f"{v / 1e6:.1f}M"
+    if v >= 1e3:
+        return f"{v / 1e3:.0f}k" if v % 1e3 == 0 else f"{v / 1e3:.1f}k"
+    return f"{v:.0f}"
+
+def _nice_ticks(y_max, n=3):
+    """Return n nice round tick values from 0 to <= y_max."""
+    if y_max <= 0:
+        return [0]
+    raw_step = y_max / (n - 1)
+    mag = 10 ** np.floor(np.log10(raw_step))
+    for mult in [1, 2, 2.5, 5, 10]:
+        step = mult * mag
+        if step >= raw_step:
+            break
+    ticks = np.arange(0, y_max + step * 0.01, step)
+    return ticks[ticks <= y_max * 1.01]
+
+def make_swarm_svg(batch, peak_areas_df, enzymes=None, width=None, height=130):
+    """Inline SVG swarmplot: control vs treatment raw areas."""
+    sub = peak_areas_df[peak_areas_df["ocnt_batch"] == batch]
+    if sub.empty:
+        return ""
+
+    if enzymes is None:
+        enzymes = ["CYP3A4", "CYP2J2"]
+    if width is None:
+        width = 160 * len(enzymes)
+    cond_colors = {"control": "#4477AA", "treatment": "#EE6677"}
+    panel_w = width // len(enzymes)
+    margin_t, margin_b, margin_l, margin_r = 18, 22, 30, 5
+    plot_h = height - margin_t - margin_b
+
+    # shared y-scale across both enzymes
+    all_areas = sub["area"].values
+    y_max = all_areas.max() * 1.15 if len(all_areas) > 0 and all_areas.max() > 0 else 1
+
+    def sy(v):
+        return margin_t + plot_h * (1 - v / y_max)
+
+    ticks = _nice_ticks(y_max)
+
+    parts = [
+        f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg"'
+        f' style="background:#fafafa; border:1px solid #e0e0e0; border-radius:4px;">'
+    ]
+
+    for ei, enz in enumerate(enzymes):
+        ox = ei * panel_w
+        enz_data = sub[sub["enzyme"] == enz]
+        ctrl = enz_data[enz_data["condition"] == "control"]["area"].values
+        trt = enz_data[enz_data["condition"] == "treatment"]["area"].values
+
+        # enzyme label
+        plot_cx = ox + margin_l + (panel_w - margin_l - margin_r) / 2
+        parts.append(
+            f'<text x="{plot_cx}" y="{margin_t - 5}" text-anchor="middle"'
+            f' font-size="9" font-family="sans-serif" font-weight="bold">{enz}</text>'
+        )
+
+        # dot x-positions (shifted right for tick label room)
+        dot_area_w = panel_w - margin_l - margin_r
+        ctrl_x = ox + margin_l + dot_area_w * 0.33
+        trt_x = ox + margin_l + dot_area_w * 0.67
+
+        # y-axis line
+        parts.append(
+            f'<line x1="{ox + margin_l}" y1="{margin_t}"'
+            f' x2="{ox + margin_l}" y2="{sy(0):.1f}"'
+            f' stroke="#ccc" stroke-width="0.5"/>'
+        )
+
+        # tick marks and labels
+        for tv in ticks:
+            ty = sy(tv)
+            parts.append(
+                f'<line x1="{ox + margin_l - 3}" y1="{ty:.1f}"'
+                f' x2="{ox + margin_l}" y2="{ty:.1f}"'
+                f' stroke="#999" stroke-width="0.5"/>'
+            )
+            parts.append(
+                f'<text x="{ox + margin_l - 5}" y="{ty + 3:.1f}" text-anchor="end"'
+                f' font-size="7" font-family="sans-serif" fill="#666">{_fmt_area(tv)}</text>'
+            )
+
+        # baseline at zero
+        parts.append(
+            f'<line x1="{ox + margin_l}" y1="{sy(0):.1f}"'
+            f' x2="{ox + panel_w - margin_r}" y2="{sy(0):.1f}"'
+            f' stroke="#ccc" stroke-width="0.5"/>'
+        )
+
+        # dots
+        for cond, cx, vals in [("control", ctrl_x, ctrl), ("treatment", trt_x, trt)]:
+            for ji, v in enumerate(vals):
+                jitter = (ji - (len(vals) - 1) / 2) * 5
+                parts.append(
+                    f'<circle cx="{cx + jitter:.1f}" cy="{sy(v):.1f}" r="3.5"'
+                    f' fill="{cond_colors[cond]}" opacity="0.75"'
+                    f' stroke="white" stroke-width="0.5"/>'
+                )
+
+        # condition labels
+        parts.append(
+            f'<text x="{ctrl_x}" y="{height - 5}" text-anchor="middle"'
+            f' font-size="8" font-family="sans-serif" fill="{cond_colors["control"]}">ctrl</text>'
+        )
+        parts.append(
+            f'<text x="{trt_x}" y="{height - 5}" text-anchor="middle"'
+            f' font-size="8" font-family="sans-serif" fill="{cond_colors["treatment"]}">trt</text>'
+        )
+
+    # y-axis label (left side, rotated)
+    mid_y = margin_t + plot_h / 2
+    parts.append(
+        f'<text x="6" y="{mid_y}" text-anchor="middle"'
+        f' font-size="8" font-family="sans-serif" fill="#666"'
+        f' transform="rotate(-90,6,{mid_y})">peak area</text>'
+    )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+# build a lookup once, then map into each dataframe
+_swarm_cache = {}
+for batch in set(react_log2["ocnt_batch"]) | set(react_pct["ocnt_batch"]):
+    _swarm_cache[batch] = make_swarm_svg(batch, peak_areas)
+
+react_log2["swarm_svg"] = react_log2["ocnt_batch"].map(_swarm_cache)
+react_pct["swarm_svg"] = react_pct["ocnt_batch"].map(_swarm_cache)
+
+# --- helper: scatter + marginal densities ---
+
+TOOLTIPS = """
+<div style="width:340px;">
+    <div>@svg{safe}</div>
+    <div><b>@batch</b></div>
+    <div style="margin-top:4px;">@swarm_svg{safe}</div>
+</div>
+"""
+
+def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
+    x = df[xcol].values
+    y = df[ycol].values
+
+    source = ColumnDataSource(data={
+        "x": x, "y": y,
+        "svg": df["svg"],
+        "swarm_svg": df["swarm_svg"],
+        "batch": df["ocnt_batch"],
+    })
+
+    lo = min(x.min(), y.min()) - abs(min(x.min(), y.min())) * 0.05 - 1
+    hi = max(x.max(), y.max()) + abs(max(x.max(), y.max())) * 0.05 + 1
+
+    # main scatter
+    p = bokeh_figure(
+        width=500, height=500,
+        x_axis_label=xlabel, y_axis_label=ylabel,
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        x_range=(lo, hi), y_range=(lo, hi),
+    )
+    p.scatter("x", "y", source=source, size=6,
+              fill_alpha=0.5, line_color="white", line_width=0.5)
+    p.add_tools(HoverTool(tooltips=TOOLTIPS))
+
+    # marginal top
+    x_kde = gaussian_kde(x)
+    x_grid = np.linspace(lo, hi, 300)
+    x_dens = x_kde(x_grid)
+
+    ph = bokeh_figure(
+        width=p.width, height=120, x_range=p.x_range,
+        title=title, tools="", toolbar_location=None,
+    )
+    ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
+    ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
+    ph.xaxis.visible = False
+    ph.yaxis.visible = False
+    ph.outline_line_color = None
+    ph.grid.visible = False
+    ph.min_border_bottom = 0
+    ph.min_border_left = p.min_border_left
+
+    # marginal right
+    y_kde = gaussian_kde(y)
+    y_grid = np.linspace(lo, hi, 300)
+    y_dens = y_kde(y_grid)
+
+    pv = bokeh_figure(
+        width=120, height=p.height, y_range=p.y_range,
+        tools="", toolbar_location=None,
+    )
+    pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
+    pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
+    pv.xaxis.visible = False
+    pv.yaxis.visible = False
+    pv.outline_line_color = None
+    pv.grid.visible = False
+    pv.min_border_bottom = p.min_border_bottom
+    pv.min_border_left = 0
+
+    layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
+    script, div = components(layout)
+    return HTML(CDN.render() + div + script)
 ```
 
-```{r}
-#| label: fig-2b-top-phosphate-activity
+###  (option 1): log2 fold change
 
-#| output: false
-#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT92_norm_data.RDS")))
+```{python}
+#| label: figure-2-log2fc
+#| cache: false
 
-rwt92_norm_df <- readRDS(here("data", "rds", "RWT92_norm_data.RDS"))
 
-fig_2b_top <- rwt92_norm_df |>
-  filter(!empty_wells) |>
-  filter(matrix == "no matrix added") |>
-  mutate(
-    condition = case_when(
-      condition == "Control baculosome (-CYP3A4) (no matrix)" ~ "-CYP3A4",
-      .default = condition
-    )
-  ) |>
-  filter(!(baculosome == "control (-CYP3A4)" & MgCl2_mM == 10)) |>
-  mutate(
-    condition = case_when(
-      MgCl2_mM != 0 ~ paste0(condition, " + 10 mM MgCl2"),
-      .default = condition
-    )
-  ) |>
-  ggplot(aes(
-    x = `buffer ionic strength (M)`,
-    y = fc,
-    group = condition,
-    color = condition
-  )) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "grey") +
-  geom_beeswarm(
-    aes(fill = condition),
-    size = 1.5,
-    shape = 21,
-    color = "white",
-    show.legend = TRUE
-  ) +
-  geom_smooth(linewidth = 0.5, show.legend = FALSE, se = FALSE) +
-  scale_color_manual("", values = c("grey", cbpalette)) +
-  scale_fill_manual("", values = c("grey", cbpalette)) +
-  labs(
-    y = "CYP3A4 activity",
-    x = "KPO4 buffer (mM)"
-  ) +
-  scale_y_continuous(breaks = scales::breaks_width(width = 10)) +
-  scale_x_continuous(
-    breaks = seq(0.01, 0.1, by = 0.03),
-    labels = \(x) 1e3 * x
-  ) +
-  theme(
-    legend.key = element_blank(),
-    legend.position = "top",
-    legend.text = element_text(size = rel(0.7)),
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    panel.grid.major.x = element_blank()
-  ) +
-  guides(
-    color = guide_legend(ncol = 1, override.aes = list(size = 4)),
-    fill = guide_legend(ncol = 1, override.aes = list(size = 4))
-  )
-```
-
-```{r}
-#| label: fig-2b-bottom-signal-improvement
-
-#| output: false
-#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT112_anno_data_df.RDS")))
-
-rwt112_data <- readRDS(here("data", "rds", "RWT112_anno_data_df.RDS")) |>
-  filter(Plate == "Plate4") |>
-  filter(dilution == 1) |>
-  filter(CYP_conc == "10nM") |>
-  filter(assay_buffer %in% c("100 mM KPO4", "10 mM KPO4 + 10 mM MgCl2")) |>
-  filter(component_lab == "fragments summed") |>
-  filter(drug_M == 5e-6) |>
-  mutate(
-    Sample = case_when(
-      assay_buffer == "100 mM KPO4" ~ "Std CYP reaction",
-      assay_buffer == "10 mM KPO4 + 10 mM MgCl2" ~ "Optimized CYP matrix"
-    )
-  ) |>
-  mutate(
-    common_name = case_when(
-      common_name == "testosterone" ~ "Testosterone",
-      common_name == "midazolam" ~ "Midazolam",
-      .default = common_name
-    )
-  ) |>
-  select(Sample, common_name, drug_M, peak_area)
-
-fold_change_labels <- rwt112_data |>
-  group_by(common_name) |>
-  summarise(
-    std_mean = mean(peak_area[Sample == "Std CYP reaction"]),
-    opt_mean = mean(peak_area[Sample == "Optimized CYP matrix"]),
-    fold_change = signif(opt_mean / std_mean, 2),
-    peak_area = max(opt_mean, std_mean) * 2,
-    Sample = "Optimized CYP matrix",
-    .groups = "drop"
-  )
-
-fig_2b_bottom <- rwt112_data |>
-  mutate(
-    Sample = factor(
-      Sample,
-      levels = c("Std CYP reaction", "Optimized CYP matrix")
-    ),
-    common_name = factor(
-      common_name,
-      levels = c(
-        "Albendazole",
-        "Midazolam",
-        "AdipoRon",
-        "Propranolol",
-        "Conivaptan",
-        "Phenacetin",
-        "Testosterone",
-        "Racecadotril"
-      )
-    )
-  ) |>
-  droplevels() |>
-  ggplot(aes(x = common_name, y = peak_area, fill = Sample)) +
-  stat_summary(
-    position = position_dodge(0.7),
-    geom = "col",
-    fun = "mean",
-    color = "white",
-    width = 0.5
-  ) +
-  geom_beeswarm(
-    shape = 21,
-    color = "white",
-    size = 1,
-    cex = 1,
-    show.legend = FALSE,
-    dodge.width = 0.7
-  ) +
-  geom_label(
-    aes(label = paste0(fold_change, "x"), y = peak_area),
-    data = fold_change_labels,
-    size = 1.5,
-    color = "white",
-    show.legend = FALSE
-  ) +
-  scale_fill_manual("", values = cbpalette) +
-  scale_y_continuous(
-    labels = scales::label_comma(),
-    transform = scales::pseudo_log_trans(sigma = 10),
-    breaks = c(0, 1e2, 1e3, 1e4, 1e5)
-  ) +
-  labs(
-    x = NULL,
-    y = "Peak Area",
-    title = NULL
-  ) +
-  theme(
-    legend.position = "top",
-    legend.key = element_blank(),
-    panel.grid.major.x = element_blank(),
-    panel.grid.major.y = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
-  )
-```
-
-```{r}
-#| label: fig-2d-structure
-
-#| output: false
-#| cache.extra: !expr tools::md5sum(here("post", "figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png"))
-
-fig_2d <- wrap_elements(
-  grid::rasterGrob(
-    png::readPNG(here("post", "figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png")),
-    interpolate = TRUE
-  )
+marginal_scatter(
+    react_log2, "CYP3A4", "CYP2J2",
+    xlabel="CYP3A4 log\u2082(treatment / control)",
+    ylabel="CYP2J2 log\u2082(treatment / control)",
+    title="CYP3A4 vs CYP2J2 \u2014 log\u2082 fold change",
 )
 ```
 
-```{r}
-#| label: figure-2-assembled
+### (option 2): % remaining
 
-#| fig-width: 7
-#| fig-height: 8
-#| cache.extra: !expr list(tools::md5sum(here("R", "helpers.R")), tools::md5sum(here("data", "rds", "RWT115_anno_data_df.RDS")), tools::md5sum(here("data", "rds", "RWT92_norm_data.RDS")), tools::md5sum(here("data", "rds", "RWT112_anno_data_df.RDS")), tools::md5sum(here("post", "figures", "assets", "Jan_2026_OpenADMET_CYP_blog_2D.png")))
+```{python}
+#| label: figure-2-pct
+#| cache: false
 
-fig_2 <- (fig_2a | (fig_2b_top / fig_2b_bottom)) /
-  fig_2d +
-  plot_layout(heights = c(1, 1))
 
-fig_2 +
-  plot_annotation(tag_levels = "A") &
-  theme(plot.tag = element_text(size = 16, face = "bold"))
+marginal_scatter(
+    react_pct, "CYP3A4", "CYP2J2",
+    xlabel="CYP3A4 (% remaining)",
+    ylabel="CYP2J2 (% remaining)",
+    title="CYP3A4 vs CYP2J2 \u2014 % remaining",
+)
 ```

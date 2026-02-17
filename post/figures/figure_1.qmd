@@ -1,165 +1,368 @@
-```{python}
-#| label: figure-1-data
+```{r}
+#| label: figure-1
+#| fig-width: 10
+#| fig-height: 9
+#| message: false
+#| cache: true
 
+# --- data loading ---
+reactivity_raw <- read_csv(here("data", "reactivity.csv"))
+inhibition_df <- read_csv(here("data", "inhibition.csv"))
 
-from bokeh.layouts import gridplot
-from scipy.stats import gaussian_kde
+# --- summarize reactivity replicates ---
+react_summary <- reactivity_raw |>
+  group_by(ocnt_batch, enzyme, condition) |>
+  summarise(mean_area = mean(area), .groups = "drop") |>
+  pivot_wider(names_from = condition, values_from = mean_area) |>
+  mutate(
+    log10_control = log10(control + 1),
+    log10_treatment = log10(treatment + 1),
+    log10fc = log10_treatment - log10_control,
+    log2fc = log2((treatment + 1) / (control + 1)),
+    pct_remaining = (treatment / control) * 100
+  )
 
-# --- load data ---
+# --- hit counts for hexbin annotations ---
+hit_counts <- react_summary |>
+  filter(!is.na(log2fc)) |>
+  group_by(enzyme) |>
+  summarise(
+    total = n(),
+    hits = sum(log2fc < -1),
+    pct_hits = round(hits / total * 100, 1),
+    .groups = "drop"
+  )
 
-peak_areas = pd.read_csv(
-    repo_root / "data/20260209_CBR-1304-cpds_vs_CYP3A4,2J2_primary_ind-reps_filtered.csv"
+# custom labeler: show 0 instead of 10^0 (pseudocount baseline)
+label_log10_pseudocount <- function(x) {
+  labs <- scales::label_math()(x)
+  labs[x == 0] <- "0"
+  labs
+}
+
+# --- Panel A: CYP2J2 log10fc histogram (fewer bins, with counts) ---
+hist_a_data <- react_summary |> filter(enzyme == "CYP2J2")
+hist_a_binned <- hist_a_data |>
+  mutate(
+    bin = cut(
+      log10fc,
+      breaks = seq(
+        floor(min(log10fc, na.rm = TRUE) * 4) / 4,
+        ceiling(max(log10fc, na.rm = TRUE) * 4) / 4,
+        by = 0.25
+      ),
+      include.lowest = TRUE
+    )
+  ) |>
+  count(bin) |>
+  mutate(
+    mid = (as.numeric(sub("\\(|\\[", "", sub(",.*", "", as.character(bin)))) +
+      as.numeric(sub(".*,", "", sub("\\]|\\)", "", as.character(bin))))) /
+      2
+  )
+
+panel_a <- hist_a_binned |>
+  ggplot(aes(x = mid, y = n)) +
+  geom_col(fill = "grey40", color = "black", linewidth = 0.2, width = 0.24) +
+  geom_text(aes(label = n), vjust = -0.3, size = 1.8, color = "grey30") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    x = expression(log[10] ~ "(peak area + 1), treatment - control"),
+    y = NULL,
+    title = "CYP2J2"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+# --- Panel B: CYP3A4 log10fc histogram (fewer bins, with counts) ---
+hist_b_data <- react_summary |> filter(enzyme == "CYP3A4")
+hist_b_binned <- hist_b_data |>
+  mutate(
+    bin = cut(
+      log10fc,
+      breaks = seq(
+        floor(min(log10fc, na.rm = TRUE) * 4) / 4,
+        ceiling(max(log10fc, na.rm = TRUE) * 4) / 4,
+        by = 0.25
+      ),
+      include.lowest = TRUE
+    )
+  ) |>
+  count(bin) |>
+  mutate(
+    mid = (as.numeric(sub("\\(|\\[", "", sub(",.*", "", as.character(bin)))) +
+      as.numeric(sub(".*,", "", sub("\\]|\\)", "", as.character(bin))))) /
+      2
+  )
+
+panel_b <- hist_b_binned |>
+  ggplot(aes(x = mid, y = n)) +
+  geom_col(fill = "grey40", color = "black", linewidth = 0.2, width = 0.24) +
+  geom_text(aes(label = n), vjust = -0.3, size = 1.8, color = "grey30") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    x = expression(log[10] ~ "(peak area + 1), treatment - control"),
+    y = "count",
+    title = "CYP3A4"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+# --- shared hex plot theme overrides ---
+hex_theme <- theme(
+  panel.grid.major.y = element_blank(),
+  panel.grid.minor.y = element_blank(),
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor.x = element_blank(),
+  legend.key.height = unit(1, "null"),
+  legend.text = element_text(margin = margin(l = -0.5)),
+  legend.title.position = "right",
+  legend.title = element_text(margin = margin(l = -2)),
+  legend.key.width = unit(0.8, "lines"),
+  legend.frame = element_rect(color = "black", linewidth = 0.5),
+  axis.text.x = element_text(angle = 0, hjust = 0.5)
 )
 
-cpds = pd.read_csv(
-    repo_root / "data/2025-09-10_selected-cpds.tsv",
-    sep="\t",
-    usecols=["ocnt_batch", "cxsmiles"]
-).drop_duplicates(subset="ocnt_batch")
+# --- Hexbin CYP2J2 ---
+hex_2j2 <- react_summary |>
+  filter(enzyme == "CYP2J2") |>
+  ggplot(aes(x = log10_control, y = log10_treatment)) +
+  geom_hex(color = "black", linewidth = 0.3, bins = 30) +
+  annotate(
+    "segment",
+    x = 3.6,
+    xend = 6,
+    y = 3.5,
+    yend = 6,
+    color = "red",
+    linetype = "dashed"
+  ) +
+  geom_text(
+    data = hit_counts |> filter(enzyme == "CYP2J2"),
+    aes(
+      x = 0,
+      y = 5.75,
+      label = paste0("hit rate: ", hits, " / ", total, " (", pct_hits, "%)")
+    ),
+    inherit.aes = FALSE,
+    fontface = "bold",
+    size = 3,
+    hjust = 0
+  ) +
+  scico::scale_fill_scico(
+    palette = "managua",
+    trans = "log10",
+    breaks = c(1, 3, 10, 30, 50),
+    limits = c(1, 50)
+  ) +
+  scale_x_continuous(
+    labels = label_log10_pseudocount,
+    breaks = 0:6,
+    limits = c(3, NA)
+  ) +
+  scale_y_continuous(
+    labels = label_log10_pseudocount,
+    breaks = 0:6,
+    limits = c(NA, 6)
+  ) +
+  labs(
+    x = "Mean peak area (control)",
+    y = "Mean peak area (treatment)",
+    fill = "# cpds"
+  ) +
+  hex_theme +
+  theme(legend.position = "none")
 
-# --- summarize replicates ---
+# --- Hexbin CYP3A4 ---
+hex_3a4 <- react_summary |>
+  filter(enzyme == "CYP3A4") |>
+  ggplot(aes(x = log10_control, y = log10_treatment)) +
+  geom_hex(color = "black", linewidth = 0.3, bins = 30) +
+  annotate(
+    "segment",
+    x = 3.6,
+    xend = 6,
+    y = 3.5,
+    yend = 6,
+    color = "red",
+    linetype = "dashed"
+  ) +
+  geom_text(
+    data = hit_counts |> filter(enzyme == "CYP3A4"),
+    aes(
+      x = 0,
+      y = 5.75,
+      label = paste0("hit rate: ", hits, " / ", total, " (", pct_hits, "%)")
+    ),
+    inherit.aes = FALSE,
+    fontface = "bold",
+    size = 3,
+    hjust = 0
+  ) +
+  scico::scale_fill_scico(
+    palette = "managua",
+    trans = "log10",
+    breaks = c(1, 3, 10, 30, 50),
+    limits = c(1, 50)
+  ) +
+  scale_x_continuous(
+    labels = label_log10_pseudocount,
+    breaks = 0:6,
+    limits = c(3, NA)
+  ) +
+  scale_y_continuous(
+    labels = label_log10_pseudocount,
+    breaks = 0:6,
+    limits = c(NA, 6)
+  ) +
+  labs(
+    x = "Mean peak area (control)",
+    y = "Mean peak area (treatment)",
+    fill = "n"
+  ) +
+  hex_theme +
+  theme(
+    legend.position = c(0.02, 0.5),
+    legend.justification = c(0, 0.5),
+    legend.background = element_blank()
+  )
 
-summary = (
-    peak_areas
-    .groupby(["ocnt_batch", "enzyme", "condition"])["area"]
-    .mean()
-    .reset_index()
-    .pivot_table(index=["ocnt_batch", "enzyme"], columns="condition", values="area")
-    .reset_index()
+# --- IC50 bin categories (shared by panels C and F) ---
+ic50_levels <- c(
+  "inactive",
+  "10\u2013100 \u00b5M",
+  "1\u201310 \u00b5M",
+  "100 nM\u20131 \u00b5M",
+  "<100 nM"
+)
+pal30 <- paletteer::paletteer_c("ggthemes::Sunset-Sunrise Diverging", 30)
+ic50_colors <- setNames(
+  pal30[c(1, 8, 15, 22, 30)],
+  ic50_levels
 )
 
-summary["log2fc"] = np.log2((summary["treatment"] + 1) / (summary["control"] + 1))
-summary["pct_remaining"] = (summary["treatment"] / summary["control"]) * 100
-
-# --- pivot for each metric ---
-
-def pivot_metric(metric):
-    return (
-        summary[["ocnt_batch", "enzyme", metric]]
-        .pivot_table(index="ocnt_batch", columns="enzyme", values=metric)
-        .reset_index()
-        .dropna()
+inhib_binned <- inhibition_df |>
+  filter(!is.na(CYP3A4_pIC50)) |>
+  mutate(
+    pIC50_plot = if_else(CYP3A4_pIC50 < 4, 2.875, CYP3A4_pIC50),
+    ic50_bin = cut(
+      CYP3A4_pIC50,
+      breaks = c(-Inf, 4, 5, 6, 7, Inf),
+      labels = ic50_levels,
+      right = FALSE
     )
+  )
 
-react_log2 = pivot_metric("log2fc")
-react_pct = pivot_metric("pct_remaining")
-
-# join SMILES
-react_log2 = react_log2.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
-react_pct = react_pct.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
-
-# --- render molecule SVGs ---
-
-def smiles_to_svg(smiles, size=(200, 200)):
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return ""
-    d2d = Draw.MolDraw2DSVG(*size)
-    d2d.DrawMolecule(mol)
-    d2d.FinishDrawing()
-    return d2d.GetDrawingText().replace("\n", "")
-
-react_log2["svg"] = react_log2["cxsmiles"].apply(smiles_to_svg)
-react_pct["svg"] = react_pct["cxsmiles"].apply(smiles_to_svg)
-
-# --- helper: scatter + marginal densities ---
-
-TOOLTIPS = """
-<div style="width:220px;">
-    <div>@svg{safe}</div>
-    <div><b>@batch</b></div>
-</div>
-"""
-
-def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
-    x = df[xcol].values
-    y = df[ycol].values
-
-    source = ColumnDataSource(data={
-        "x": x, "y": y,
-        "svg": df["svg"],
-        "batch": df["ocnt_batch"],
-    })
-
-    lo = min(x.min(), y.min()) - abs(min(x.min(), y.min())) * 0.05 - 1
-    hi = max(x.max(), y.max()) + abs(max(x.max(), y.max())) * 0.05 + 1
-
-    # main scatter
-    p = bokeh_figure(
-        width=500, height=500,
-        x_axis_label=xlabel, y_axis_label=ylabel,
-        tools="pan,wheel_zoom,box_zoom,reset,save",
-        x_range=(lo, hi), y_range=(lo, hi),
-    )
-    p.scatter("x", "y", source=source, size=6,
-              fill_alpha=0.5, line_color="white", line_width=0.5)
-    p.add_tools(HoverTool(tooltips=TOOLTIPS))
-
-    # marginal top
-    x_kde = gaussian_kde(x)
-    x_grid = np.linspace(lo, hi, 300)
-    x_dens = x_kde(x_grid)
-
-    ph = bokeh_figure(
-        width=p.width, height=120, x_range=p.x_range,
-        title=title, tools="", toolbar_location=None,
-    )
-    ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
-    ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
-    ph.xaxis.visible = False
-    ph.yaxis.visible = False
-    ph.outline_line_color = None
-    ph.grid.visible = False
-    ph.min_border_bottom = 0
-    ph.min_border_left = p.min_border_left
-
-    # marginal right
-    y_kde = gaussian_kde(y)
-    y_grid = np.linspace(lo, hi, 300)
-    y_dens = y_kde(y_grid)
-
-    pv = bokeh_figure(
-        width=120, height=p.height, y_range=p.y_range,
-        tools="", toolbar_location=None,
-    )
-    pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
-    pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
-    pv.xaxis.visible = False
-    pv.yaxis.visible = False
-    pv.outline_line_color = None
-    pv.grid.visible = False
-    pv.min_border_bottom = p.min_border_bottom
-    pv.min_border_left = 0
-
-    layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
-    script, div = components(layout)
-    return HTML(CDN.render() + div + script)
-```
-
-### Panel A (option 1): log2 fold change
-
-```{python}
-#| label: figure-1-log2fc
-
-
-marginal_scatter(
-    react_log2, "CYP3A4", "CYP2J2",
-    xlabel="CYP3A4 log\u2082(treatment / control)",
-    ylabel="CYP2J2 log\u2082(treatment / control)",
-    title="CYP3A4 vs CYP2J2 \u2014 log\u2082 fold change",
+# shared x-axis for panels C and F
+pIC50_x_scale <- scale_x_reverse(
+  breaks = c(8, 7, 6, 5, 4, 2.875),
+  labels = c("8", "7", "6", "5", "4", "inactive"),
+  limits = c(8, 2.5)
 )
-```
 
-### Panel A (option 2): % remaining
+# --- Panel C: pIC50 distribution histogram ---
+panel_c <- inhib_binned |>
+  ggplot(aes(x = pIC50_plot, fill = ic50_bin)) +
+  geom_histogram(
+    binwidth = 0.25,
+    color = "black",
+    linewidth = 0.2,
+    boundary = 4
+  ) +
+  stat_bin(
+    aes(x = pIC50_plot, label = after_stat(ifelse(count == 0, "", count))),
+    geom = "text",
+    binwidth = 0.25,
+    boundary = 4,
+    vjust = -0.3,
+    size = 1.8,
+    color = "grey30",
+    inherit.aes = FALSE
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  pIC50_x_scale +
+  scale_fill_manual(expression("IC"[50] ~ "range"), values = ic50_colors) +
+  labs(
+    x = expression("CYP3A4 pIC"[50]),
+    y = NULL,
+    title = expression("CYP3A4 Inhibition pIC"[50])
+  ) +
+  theme(
+    legend.position = c(0, 1),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.text = element_text(size = rel(0.7)),
+    legend.key.size = unit(0.4, "lines"),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) +
+  guides(fill = guide_legend(ncol = 1))
 
-```{python}
-#| label: figure-1-pct
+# --- Panel F: inhibition vs reactivity scatter ---
+react_3a4 <- react_summary |>
+  filter(enzyme == "CYP3A4") |>
+  select(ocnt_batch, log2fc)
 
+inhib_react <- inhib_binned |>
+  inner_join(react_3a4, by = "ocnt_batch")
 
-marginal_scatter(
-    react_pct, "CYP3A4", "CYP2J2",
-    xlabel="CYP3A4 (% remaining)",
-    ylabel="CYP2J2 (% remaining)",
-    title="CYP3A4 vs CYP2J2 \u2014 % remaining",
-)
+active_data <- inhib_react |> filter(CYP3A4_pIC50 >= 4)
+inactive_data <- inhib_react |> filter(CYP3A4_pIC50 < 4)
+
+panel_d <- ggplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(
+    data = active_data,
+    aes(x = pIC50_plot, y = log2fc, color = ic50_bin),
+    alpha = 0.5,
+    size = 1.5,
+    shape = 16
+  ) +
+  geom_beeswarm(
+    data = inactive_data,
+    aes(x = pIC50_plot, y = log2fc, color = ic50_bin),
+    alpha = 0.5,
+    size = 1.5,
+    shape = 16,
+    cex = 2,
+    corral = "wrap",
+    corral.width = 0.8
+  ) +
+  pIC50_x_scale +
+  scale_color_manual(expression("IC"[50] ~ "range"), values = ic50_colors) +
+  labs(
+    x = expression("CYP3A4 pIC"[50]),
+    y = expression(log[2] ~ "(treatment / control)"),
+    title = "Inhibition vs Reactivity"
+  ) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+# --- assemble figure ---
+fig1 <- (panel_b | panel_a | panel_c) /
+  (hex_3a4 | hex_2j2 | panel_d) +
+  plot_layout(heights = c(1, 1))
+
+fig1 +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(size = 16, face = "bold"))
 ```

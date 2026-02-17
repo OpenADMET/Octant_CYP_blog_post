@@ -6,10 +6,11 @@ format:
   html:
     # self-contained: true  # re-enable for final publish
     toc: true
+    toc-location: left
+    smooth-scroll: true
     code-fold: true
-    number-sections: true
+    number-sections: false
 execute:
-  cache: true
   warning: false
 knitr:
   opts_chunk:

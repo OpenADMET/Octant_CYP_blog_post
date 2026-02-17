@@ -4,6 +4,7 @@ author: "Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi 
 date: today
 format:
   html:
+    embed-resources: true
     output-file: index.html
 ---
 
@@ -11,20 +12,26 @@ format:
 
 {{< include post/_setup_python.qmd >}}
 
-## Figure 1
+## Figure 1: CYP Reactivity and Inhibition Overview
 
 {{< include post/figures/figure_1.qmd >}}
 
-{{< include post/figures/figure_1b.qmd >}}
-
-## Figure 2: Assay Development
+## Figure 2: 3A4 vs 2J2 reactivity - Interactive
 
 {{< include post/figures/figure_2.qmd >}}
 
-## Figure 3
+## Figure 3: 3A4 inhibition vs reactivity - Interactive
 
 {{< include post/figures/figure_3.qmd >}}
 
-## Figure 4
+## Figure 4: Assay Development
 
 {{< include post/figures/figure_4.qmd >}}
+
+## Figure 5: QC approaches
+
+## Figure 6: Expanding chemical landscape
+
+## Figure 7: Clearance + TDI assay teaser
+
+

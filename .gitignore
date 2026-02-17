@@ -26,8 +26,9 @@ Rplots.pdf
 # uv
 uv.lock
 
-# Large data assets
-data/drc-plots/
+# Preprocessing scripts & raw data
+scripts/
+data/raw/
 
 # macOS
 .DS_Store
