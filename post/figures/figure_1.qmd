@@ -1,7 +1,7 @@
 ```{r}
 #| label: figure-1
 #| fig-width: 10
-#| fig-height: 9
+#| fig-height: 7
 #| message: false
 #| cache: true
 
@@ -127,9 +127,8 @@ hex_theme <- theme(
   panel.grid.major.x = element_blank(),
   panel.grid.minor.x = element_blank(),
   legend.key.height = unit(1, "null"),
-  legend.text = element_text(margin = margin(l = -0.5)),
-  legend.title.position = "right",
-  legend.title = element_text(margin = margin(l = -2)),
+  legend.title.position = "left",
+  legend.title = element_text(angle = 90),
   legend.key.width = unit(0.8, "lines"),
   legend.frame = element_rect(color = "black", linewidth = 0.5),
   axis.text.x = element_text(angle = 0, hjust = 0.5)
@@ -165,21 +164,21 @@ hex_2j2 <- react_summary |>
     palette = "managua",
     trans = "log10",
     breaks = c(1, 3, 10, 30, 50),
-    limits = c(1, 50)
+    limits = c(1, 60)
   ) +
   scale_x_continuous(
-    labels = label_log10_pseudocount,
+    labels = \(x) as.integer(x),
     breaks = 0:6,
     limits = c(3, NA)
   ) +
   scale_y_continuous(
-    labels = label_log10_pseudocount,
+    labels = \(x) as.integer(x),
     breaks = 0:6,
     limits = c(NA, 6)
   ) +
   labs(
-    x = "Mean peak area (control)",
-    y = "Mean peak area (treatment)",
+    x = expression(atop("Control", Log[10](peak ~ area + 1))),
+    y = expression(atop("Treatment", Log[10](peak ~ area + 1))),
     fill = "# cpds"
   ) +
   hex_theme +
@@ -215,27 +214,28 @@ hex_3a4 <- react_summary |>
     palette = "managua",
     trans = "log10",
     breaks = c(1, 3, 10, 30, 50),
-    limits = c(1, 50)
+    limits = c(1, 60)
   ) +
   scale_x_continuous(
-    labels = label_log10_pseudocount,
+    labels = \(x) as.integer(x),
     breaks = 0:6,
     limits = c(3, NA)
   ) +
   scale_y_continuous(
-    labels = label_log10_pseudocount,
+    labels = \(x) as.integer(x),
     breaks = 0:6,
     limits = c(NA, 6)
   ) +
   labs(
-    x = "Mean peak area (control)",
-    y = "Mean peak area (treatment)",
+    x = expression(atop("Control", Log[10](peak ~ area + 1))),
+    y = expression(atop("Treatment", Log[10](peak ~ area + 1))),
     fill = "n"
   ) +
   hex_theme +
   theme(
     legend.position = c(0.02, 0.5),
     legend.justification = c(0, 0.5),
+    legend.title = element_blank(),
     legend.background = element_blank()
   )
 

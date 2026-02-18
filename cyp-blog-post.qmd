@@ -30,8 +30,12 @@ format:
 
 ## Figure 5: QC approaches
 
+![](post/Figure_5.png)
+
 ## Figure 6: Expanding chemical landscape
+
+{{< include post/figures/figure_6.qmd >}}
 
 ## Figure 7: Clearance + TDI assay teaser
 
-
+{{< include post/figures/figure_7.qmd >}}

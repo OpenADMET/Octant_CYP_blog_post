@@ -1,0 +1,135 @@
+```{r}
+#| label: figure-6
+#| fig-width: 5
+#| fig-height: 5
+#| message: false
+#| cache: true
+
+wif <- read_tsv(here("data", "willitfly.tsv"))
+
+wif <- wif |>
+  mutate(
+    log10_amfluoride = log10(ammonium_fluoride_area + 1),
+    log10_amformate = log10(ammonium_formate_area + 1)
+  )
+
+# custom labeler: show 0 instead of 10^0 (pseudocount baseline)
+label_log10_pseudocount <- function(x) {
+  labs <- scales::label_math()(x)
+  labs[x == 0] <- "0"
+  labs
+}
+
+hex_theme <- theme(
+  panel.grid.major.y = element_blank(),
+  panel.grid.minor.y = element_blank(),
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor.x = element_blank(),
+  legend.key.height = unit(1, "null"),
+  legend.title = element_text(angle = 90, hjust = 0.5),
+  legend.title.position = "left",
+  legend.key.width = unit(0.8, "lines"),
+  legend.frame = element_rect(color = "black", linewidth = 0.5),
+  axis.text.x = element_text(angle = 0, hjust = 0.5)
+)
+
+axis_max <- ceiling(max(
+  c(wif$log10_amfluoride, wif$log10_amformate),
+  na.rm = TRUE
+))
+shared_ylim <- c(0, axis_max)
+
+# --- main hexplot ---
+hex_panel <- wif |>
+  ggplot(aes(x = log10_amformate, y = log10_amfluoride)) +
+  geom_hex(color = "black", linewidth = 0.3, bins = 30) +
+  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
+  scico::scale_fill_scico(
+    palette = "managua",
+    trans = "log10",
+    breaks = c(1, 3, 10, 30, 100, 400),
+    limits = c(1, NA)
+  ) +
+  scale_x_continuous(
+    labels = \(x) as.integer(x),
+    breaks = 0:axis_max
+  ) +
+  scale_y_continuous(
+    labels = \(x) as.integer(x),
+    breaks = 0:axis_max,
+    limits = shared_ylim
+  ) +
+  labs(
+    x = expression(atop("Ammonium formate", Log[10](peak ~ area + 1))),
+    y = expression(atop("Ammonium fluoride", Log[10](peak ~ area + 1))),
+    fill = "number of molecules"
+  ) +
+  hex_theme +
+  theme(
+    legend.position = "left",
+    legend.background = element_blank(),
+    legend.title = element_text(angle = 90, hjust = 0.5)
+  )
+
+# --- marginal barplot: median fold-increase by formate signal bin ---
+bin_width <- 0.5
+bin_breaks <- seq(0, axis_max, by = bin_width)
+
+fold_change_bins <- wif |>
+  filter(ammonium_formate_area > 0) |>
+  mutate(
+    fc = ammonium_fluoride_area / ammonium_formate_area,
+    bin = cut(log10_amformate, breaks = bin_breaks, include.lowest = TRUE)
+  ) |>
+  filter(!is.na(bin)) |>
+  group_by(bin) |>
+  summarise(
+    median_fc = median(fc),
+    n = n(),
+    .groups = "drop"
+  ) |>
+  mutate(
+    bin_mid = (as.numeric(sub(
+      "\\(|\\[",
+      "",
+      sub(",.*", "", as.character(bin))
+    )) +
+      as.numeric(sub(".*,", "", sub("\\]|\\)", "", as.character(bin))))) /
+      2
+  )
+
+marginal_panel <- fold_change_bins |>
+  ggplot(aes(x = bin_mid, y = median_fc)) +
+  geom_col(
+    fill = "black",
+    color = "black",
+    linewidth = 0.2,
+    width = bin_width * 0.9
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1fx", median_fc)),
+    vjust = -0.3,
+    size = 2.5,
+    color = "grey30"
+  ) +
+  scale_x_continuous(
+    breaks = 0:axis_max,
+    limits = shared_ylim
+  ) +
+  scale_y_continuous(
+    breaks = c(0, 5, 10),
+    expand = expansion(mult = c(0, 0.2))
+  ) +
+  labs(
+    x = NULL,
+    y = "Median fold-increase\n(fluoride / formate)"
+  ) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    axis.text.x = element_text(angle = 0, hjust = 0.5)
+  )
+
+# --- assemble with patchwork ---
+marginal_panel / hex_panel + plot_layout(heights = c(1, 3))
+```

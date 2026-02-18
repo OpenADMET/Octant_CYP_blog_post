@@ -21,4 +21,8 @@ dependencies = [
 
     # Statistics
     "scipy",
+
+    # Image processing (SVG→raster for compact tooltips)
+    "Pillow",
+    "cairosvg",
 ]

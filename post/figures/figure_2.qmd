@@ -3,8 +3,12 @@
 #| cache: false
 
 
+from PIL import Image
+from io import BytesIO
 from bokeh.layouts import gridplot
 from scipy.stats import gaussian_kde
+import base64
+import cairosvg
 
 # --- load data (pre-filtered by scripts/prepare_data.py) ---
 
@@ -43,19 +47,20 @@ react_pct = pivot_metric("pct_remaining")
 react_log2 = react_log2.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
 react_pct = react_pct.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["cxsmiles"])
 
-# --- render molecule SVGs ---
+# --- render molecule images (WEBP base64 for compact HTML) ---
 
-def smiles_to_svg(smiles, size=(200, 200)):
+def smiles_to_webp(smiles, size=(300, 300), quality=90):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return ""
-    d2d = Draw.MolDraw2DSVG(*size)
-    d2d.DrawMolecule(mol)
-    d2d.FinishDrawing()
-    return d2d.GetDrawingText().replace("\n", "")
+    img = Draw.MolToImage(mol, size=size)
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=quality)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/webp;base64,{b64}"
 
-react_log2["svg"] = react_log2["cxsmiles"].apply(smiles_to_svg)
-react_pct["svg"] = react_pct["cxsmiles"].apply(smiles_to_svg)
+react_log2["mol_img"] = react_log2["cxsmiles"].apply(smiles_to_webp)
+react_pct["mol_img"] = react_pct["cxsmiles"].apply(smiles_to_webp)
 
 # --- swarmplot SVGs for tooltips ---
 
@@ -187,21 +192,33 @@ def make_swarm_svg(batch, peak_areas_df, enzymes=None, width=None, height=130):
     parts.append("</svg>")
     return "".join(parts)
 
+# --- convert SVG strings to compact WEBP base64 ---
+
+def svg_to_webp_b64(svg_str, quality=90):
+    if not svg_str:
+        return ""
+    png_bytes = cairosvg.svg2png(bytestring=svg_str.encode("utf-8"), scale=2)
+    img = Image.open(BytesIO(png_bytes))
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=quality)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/webp;base64,{b64}"
+
 # build a lookup once, then map into each dataframe
 _swarm_cache = {}
 for batch in set(react_log2["ocnt_batch"]) | set(react_pct["ocnt_batch"]):
-    _swarm_cache[batch] = make_swarm_svg(batch, peak_areas)
+    _swarm_cache[batch] = svg_to_webp_b64(make_swarm_svg(batch, peak_areas))
 
-react_log2["swarm_svg"] = react_log2["ocnt_batch"].map(_swarm_cache)
-react_pct["swarm_svg"] = react_pct["ocnt_batch"].map(_swarm_cache)
+react_log2["swarm_img"] = react_log2["ocnt_batch"].map(_swarm_cache)
+react_pct["swarm_img"] = react_pct["ocnt_batch"].map(_swarm_cache)
 
 # --- helper: scatter + marginal densities ---
 
 TOOLTIPS = """
 <div style="width:340px;">
-    <div>@svg{safe}</div>
+    <div><img src="@mol_img{safe}" width="200"></div>
     <div><b>@batch</b></div>
-    <div style="margin-top:4px;">@swarm_svg{safe}</div>
+    <div style="margin-top:4px;"><img src="@swarm_img{safe}" height="130"></div>
 </div>
 """
 
@@ -211,8 +228,8 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
 
     source = ColumnDataSource(data={
         "x": x, "y": y,
-        "svg": df["svg"],
-        "swarm_svg": df["swarm_svg"],
+        "mol_img": df["mol_img"],
+        "swarm_img": df["swarm_img"],
         "batch": df["ocnt_batch"],
     })
 
@@ -226,6 +243,8 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
         tools="pan,wheel_zoom,box_zoom,reset,save",
         x_range=(lo, hi), y_range=(lo, hi),
     )
+    p.xaxis.axis_label_text_font_style = "normal"
+    p.yaxis.axis_label_text_font_style = "normal"
     p.scatter("x", "y", source=source, size=6,
               fill_alpha=0.5, line_color="white", line_width=0.5)
     p.add_tools(HoverTool(tooltips=TOOLTIPS))

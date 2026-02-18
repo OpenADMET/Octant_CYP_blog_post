@@ -9,6 +9,7 @@ from bokeh.models import CustomJSTickFormatter
 from scipy.stats import gaussian_kde
 from concurrent.futures import ThreadPoolExecutor
 import base64
+import cairosvg
 
 # --- load IC50 data (copied by scripts/prepare_data.py) ---
 
@@ -43,40 +44,53 @@ panel_b = ic50_avg.merge(
 # convert pIC50 to IC50 (molar)
 panel_b["IC50_M"] = 10 ** (-panel_b["CYP3A4_pIC50"])
 
-# --- molecule SVGs ---
+# --- molecule images (WEBP base64 for compact HTML) ---
 
-def smiles_to_svg(smiles, size=(150, 150)):
+def smiles_to_webp(smiles, size=(300, 300), quality=90):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return ""
-    d2d = Draw.MolDraw2DSVG(*size)
-    d2d.DrawMolecule(mol)
-    d2d.FinishDrawing()
-    return d2d.GetDrawingText().replace("\n", "")
+    img = Draw.MolToImage(mol, size=size)
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=quality)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/webp;base64,{b64}"
 
-panel_b["svg"] = panel_b["smiles"].apply(smiles_to_svg)
+panel_b["mol_img"] = panel_b["smiles"].apply(smiles_to_webp)
 
 # --- DRC plot thumbnails as base64 (parallelized) ---
 
 def png_to_base64_thumb(batch_id, width=300):
-    path = repo_root / f"data/drc-plots/{batch_id}_c7111.png"
+    path = repo_root / f"data/drc-plots/{batch_id}_c7111_no-ctrls.png"
     if not path.exists():
         return ""
     img = Image.open(path)
     ratio = width / img.width
     img = img.resize((width, int(img.height * ratio)), Image.LANCZOS)
     buf = BytesIO()
-    img.save(buf, format="WEBP", quality=70)
+    img.save(buf, format="WEBP", quality=90)
     b64 = base64.b64encode(buf.getvalue()).decode()
     return f"data:image/webp;base64,{b64}"
 
 with ThreadPoolExecutor() as pool:
     panel_b["drc_img"] = list(pool.map(png_to_base64_thumb, panel_b["ocnt_batch"]))
 
-# --- swarm SVGs (reuses make_swarm_svg & peak_areas from figure_1) ---
+# --- convert SVG strings to compact WEBP base64 ---
 
-panel_b["swarm_svg"] = panel_b["ocnt_batch"].map(
-    lambda b: make_swarm_svg(b, peak_areas, enzymes=["CYP3A4"])
+def svg_to_webp_b64(svg_str, quality=90):
+    if not svg_str:
+        return ""
+    png_bytes = cairosvg.svg2png(bytestring=svg_str.encode("utf-8"), scale=2)
+    img = Image.open(BytesIO(png_bytes))
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=quality)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/webp;base64,{b64}"
+
+# --- swarm images (reuses make_swarm_svg & peak_areas from figure_1) ---
+
+panel_b["swarm_img"] = panel_b["ocnt_batch"].map(
+    lambda b: svg_to_webp_b64(make_swarm_svg(b, peak_areas, enzymes=["CYP3A4"]))
 )
 ```
 
@@ -91,8 +105,8 @@ def make_panel_b(panel_b):
     source_b = ColumnDataSource(data={
         "x": x,
         "y": y,
-        "svg": panel_b["svg"],
-        "swarm_svg": panel_b["swarm_svg"],
+        "mol_img": panel_b["mol_img"],
+        "swarm_img": panel_b["swarm_img"],
         "drc_img": panel_b["drc_img"],
         "batch": panel_b["ocnt_batch"],
         "pic50": panel_b["CYP3A4_pIC50"],
@@ -101,8 +115,8 @@ def make_panel_b(panel_b):
     TOOLTIPS_B = """
     <div style="width:580px;">
         <div style="display:flex; align-items:start; gap:6px;">
-            <div>@swarm_svg{safe}</div>
-            <div>@svg{safe}</div>
+            <div><img src="@swarm_img{safe}" height="130"></div>
+            <div><img src="@mol_img{safe}" width="150"></div>
             <div><img src="@drc_img{safe}" width="200"></div>
         </div>
         <div><b>@batch</b> &mdash; pIC50: @pic50{0.2}</div>
@@ -132,6 +146,8 @@ def make_panel_b(panel_b):
         y_range=(lo_y, hi_y),
     )
     p.xaxis.formatter = si_formatter
+    p.xaxis.axis_label_text_font_style = "normal"
+    p.yaxis.axis_label_text_font_style = "normal"
     p.scatter("x", "y", source=source_b, size=6,
               fill_alpha=0.5, line_color="white", line_width=0.5)
     p.add_tools(HoverTool(tooltips=TOOLTIPS_B))

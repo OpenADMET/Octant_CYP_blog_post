@@ -19,9 +19,10 @@ __pycache__/
 .venv/
 
 # R artifacts
-.Rdata
-.Rhistory
-Rplots.pdf
+*.RDS
+*.rds
+*.Rdata
+*.Rhistory
 
 # uv
 uv.lock

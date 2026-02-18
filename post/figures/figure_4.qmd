@@ -217,7 +217,7 @@ fig_2d <- wrap_elements(
 )
 
 # --- assemble figure ---
-fig_2 <- (fig_2a | (fig_2b_top / fig_2b_bottom)) /
+fig_2 <- (free(fig_2a, type = "label") | (fig_2b_top / fig_2b_bottom)) /
   fig_2d +
   plot_layout(heights = c(1, 1))
 

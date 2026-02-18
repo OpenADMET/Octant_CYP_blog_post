@@ -1,0 +1,349 @@
+```{r}
+#| label: figure-7
+#| fig-width: 10
+#| fig-height: 6
+#| cache: true
+
+# --- data loading ---
+clearance_df <- read_tsv(
+  here("data", "clearance_snippet.tsv"),
+  show_col_types = FALSE
+)
+tdi_df <- read_tsv(here("data", "tdi_pic50_shift.tsv"), show_col_types = FALSE)
+
+# ============================================================
+# Panel A: AdipoRon metabolic depletion curves
+# ============================================================
+
+# Select 5 representative concentrations matching draft
+selected_concs <- c(1.5e-6, 3e-6, 6e-6, 1.2e-5, 2e-5)
+
+panel_a_df <- clearance_df |>
+  dplyr::filter(drug_M %in% selected_concs) |>
+  mutate(
+    conc_label = paste0(drug_M * 1e6, " \u00b5M"),
+    conc_label = fct_reorder(conc_label, drug_M)
+  )
+
+# Scientific notation formatter for facet annotation
+max_areas <- panel_a_df |>
+  group_by(conc_label) |>
+  summarise(
+    max_area = max(area, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    label = formatC(max_area, format = "e", digits = 2),
+    elapsed_time = 60,
+    area = max_area * 0.95
+  )
+
+panel_a <- panel_a_df |>
+  ggplot(aes(x = elapsed_time, y = area, fill = drug)) +
+  facet_grid2(drug ~ conc_label, scales = "free_y", independent = "y") +
+  geom_smooth(
+    span = 0.3,
+    se = FALSE,
+    aes(color = drug)
+  ) +
+  geom_beeswarm(shape = 21, color = "black") +
+  scale_fill_manual(values = cbpalette, aesthetics = c("fill", "color")) +
+  scale_x_continuous(breaks = c(0, 60, 120)) +
+  scale_y_continuous(
+    breaks = \(x) c(0, max(x, na.rm = TRUE)),
+    labels = \(x) ifelse(x == 0, "0", scales::label_scientific(digits = 2)(x)),
+    limits = c(0, NA)
+  ) +
+  labs(
+    x = "Reaction time (min)",
+    y = "TOF-MS\npeak area"
+  ) +
+  theme(
+    strip.text = element_text(size = rel(0.9)),
+    strip.text.y = element_text(angle = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = rel(0.8)),
+    axis.text.y = element_text(size = rel(0.7)),
+    panel.spacing = unit(0.4, "lines"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position = "none"
+  )
+
+# ============================================================
+# Panel B: Troleandomycin DRC shift example
+# ============================================================
+
+drc_curves <- read_tsv(
+  here("data", "tdi_drc_curves.tsv"),
+  show_col_types = FALSE
+)
+drc_points <- read_tsv(
+  here("data", "tdi_drc_points.tsv"),
+  show_col_types = FALSE
+)
+
+drc_curves <- drc_curves |>
+  mutate(
+    condition = if_else(
+      preincubation,
+      "30 min preincubation",
+      "No preincubation"
+    )
+  )
+drc_points <- drc_points |>
+  mutate(
+    condition = if_else(
+      preincubation,
+      "30 min preincubation",
+      "No preincubation"
+    )
+  )
+
+# IC50 positions from params file
+drc_params <- read_tsv(
+  here("data", "tdi_drc_params.tsv"),
+  show_col_types = FALSE
+)
+trole_params <- drc_params |> filter(drug == "troleandomycin")
+ic50_no_preinc <- -trole_params$estimate_pIC50[!trole_params$preincubation]
+ic50_preinc <- -trole_params$estimate_pIC50[trole_params$preincubation]
+
+panel_b <- ggplot() +
+  # red rectangle highlighting the IC50 shift at 50% activity
+  annotate(
+    "rect",
+    xmin = ic50_preinc,
+    xmax = ic50_no_preinc,
+    ymin = -Inf,
+    ymax = Inf,
+    fill = "red",
+    alpha = 0.2,
+    color = "red",
+    linewidth = 0.4,
+    linetype = "solid"
+  ) +
+  # IC50 shift label + arrow pointing right (toward panel C)
+  annotate(
+    "text",
+    x = ic50_no_preinc + 0.8,
+    y = 0.5,
+    label = expression(Delta * "pIC"[50]),
+    size = 3,
+    color = "red",
+    fontface = "bold"
+  ) +
+  geom_line(
+    data = drc_curves,
+    aes(x = log10_drug_M, y = norm_value, color = condition),
+    linewidth = 0.8,
+    show.legend = FALSE
+  ) +
+  geom_point(
+    data = drc_points,
+    aes(x = log10_conc, y = norm_value, fill = condition),
+    shape = 21,
+    color = "black",
+    size = 2
+  ) +
+  annotate(
+    "segment",
+    x = ic50_no_preinc,
+    y = 0.5,
+    xend = ic50_preinc,
+    yend = 0.5,
+    arrow = arrow(length = unit(0.12, "inches"), type = "closed"),
+    color = "red",
+    linewidth = 0.6
+  ) +
+  geom_point(
+    x = ic50_no_preinc,
+    y = 0.5,
+    color = "red",
+    size = 10,
+    show.legend = FALSE
+  ) +
+  scale_color_manual(
+    values = c(
+      "No preincubation" = "grey60",
+      "30 min preincubation" = "black"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "No preincubation" = "grey60",
+      "30 min preincubation" = "black"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(-10, -4, 2),
+    limits = c(-10, -4),
+    labels = \(x) parse(text = paste0("10^{", x, "}"))
+  ) +
+  scale_y_continuous(
+    labels = scales::label_percent(),
+    breaks = c(0, 0.25, 0.5, 0.75, 1)
+  ) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = "Concentration (M)",
+    y = "CYP3A4\n% Activity",
+    title = "Troleandomycin",
+    color = NULL,
+    fill = NULL
+  ) +
+  theme(
+    legend.position = c(0, 0),
+    legend.justification = c(0, 0),
+    legend.background = element_blank(),
+    legend.text = element_text(size = rel(0.7)),
+    legend.key = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    plot.margin = margin(5.5, 15, 5.5, 5.5)
+  )
+
+# ============================================================
+# Panel B: pIC50 shift estimates for TDI classification
+# ============================================================
+
+# Known TDI compounds (preincubation causes a large pIC50 shift)
+known_tdi <- c("troleandomycin", "azamulin", "verapamil", "diltiazem")
+tdi_cutoff <- log10(2) # 2-fold shift on log10 scale
+
+panel_b_df <- tdi_df |>
+  mutate(
+    is_tdi = drug %in% known_tdi,
+    drug = fct_relevel(drug, known_tdi, after = 0),
+    x = as.numeric(drug)
+  )
+
+n_drugs <- nrow(panel_b_df)
+n_tdi <- sum(panel_b_df$is_tdi)
+y_top <- max(panel_b_df$delta_q97.5) + 0.25
+drug_labels <- levels(panel_b_df$drug)
+
+panel_c <- panel_b_df |>
+  ggplot(aes(x = x, y = delta_mean)) +
+  # background shading
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = -0.15,
+    ymax = tdi_cutoff,
+    fill = "grey80",
+    alpha = 0.5
+  ) +
+  # reference lines
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
+  geom_hline(
+    yintercept = tdi_cutoff,
+    linetype = "dotted",
+    linewidth = 0.6,
+    color = "grey30"
+  ) +
+  # TDI cutoff label
+  annotate(
+    "text",
+    x = n_drugs + 0.4,
+    y = tdi_cutoff + 0.1,
+    label = "TDI cutoff = 2-fold shift",
+    hjust = 1,
+    size = 2.8,
+    color = "grey30",
+    fontface = "italic"
+  ) +
+  # separating line between known TDI and controls
+  geom_vline(
+    xintercept = n_tdi + 0.5,
+    linetype = "dotted",
+    color = "grey50",
+    linewidth = 0.4
+  ) +
+  # data: error bars + points
+  geom_errorbar(
+    aes(ymin = `delta_q2.5`, ymax = `delta_q97.5`),
+    width = 0.25,
+    linewidth = 0.5,
+    color = "black"
+  ) +
+  geom_point(
+    aes(fill = is_tdi),
+    shape = 21,
+    size = 2,
+    color = "black",
+    stroke = 0.5
+  ) +
+  scale_fill_manual(
+    values = c("TRUE" = "black", "FALSE" = "grey80"),
+    guide = "none"
+  ) +
+  scale_x_continuous(
+    breaks = seq_len(n_drugs),
+    labels = drug_labels,
+    expand = expansion(mult = 0.1)
+  ) +
+  # group labels
+  annotate(
+    "text",
+    x = (1 + n_tdi) / 2,
+    y = y_top - 0.1,
+    label = "Known TDI",
+    fontface = "bold",
+    size = 3
+  ) +
+  annotate(
+    "text",
+    x = n_tdi + 0.5 + (n_drugs - n_tdi) / 2,
+    y = y_top - 0.1,
+    label = "Non-TDI controls",
+    fontface = "bold",
+    size = 3,
+    lineheight = 0.85
+  ) +
+  labs(
+    x = NULL,
+    y = expression("pIC"[50] ~ "shift")
+  ) +
+  coord_cartesian(ylim = c(-0.15, y_top), clip = "off") +
+  theme(
+    legend.position = "none",
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+# ============================================================
+# Assemble with patchwork
+# ============================================================
+tag_theme <- theme(plot.tag = element_text(size = 16, face = "bold"))
+
+# Arrow connector between DRC and forest plot
+arrow_panel <- ggplot() +
+  annotate(
+    "segment",
+    x = 0,
+    xend = 0.8,
+    y = 0.5,
+    yend = 0.5,
+    arrow = arrow(length = unit(0.15, "inches"), type = "closed"),
+    linewidth = 0.8
+  ) +
+  scale_x_continuous(limits = c(0, 1)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_void()
+
+# Manual tags: only A and B, nothing on arrow or forest plot
+panel_a_tagged <- panel_a + labs(tag = "A") + tag_theme
+panel_b_tagged <- panel_b + labs(tag = "B") + tag_theme
+
+bottom_row <- wrap_plots(
+  free(panel_b_tagged, type = "label"),
+  arrow_panel,
+  panel_c,
+  widths = c(3, 1, 5)
+)
+
+(panel_a_tagged / bottom_row) +
+  plot_layout(heights = c(1, 1))
+```
