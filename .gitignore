@@ -31,11 +31,7 @@ uv.lock
 scripts/
 data/raw/
 
-# macOS
-.DS_Store
-
 # Editor
-.vscode/
 *~
 
 # Claude / Serena
