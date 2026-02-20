@@ -40,8 +40,48 @@ label_log10_pseudocount <- function(x) {
   labs
 }
 
-# --- Panel A: CYP2J2 log10fc histogram (fewer bins, with counts) ---
-hist_a_data <- react_summary |> filter(enzyme == "CYP2J2")
+# --- Panel C: CYP2J2 log10fc histogram (fewer bins, with counts) ---
+hist_c_data <- react_summary |> filter(enzyme == "CYP2J2")
+hist_c_binned <- hist_c_data |>
+  mutate(
+    bin = cut(
+      log10fc,
+      breaks = seq(
+        floor(min(log10fc, na.rm = TRUE) * 4) / 4,
+        ceiling(max(log10fc, na.rm = TRUE) * 4) / 4,
+        by = 0.25
+      ),
+      include.lowest = TRUE
+    )
+  ) |>
+  count(bin) |>
+  mutate(
+    mid = (as.numeric(sub("\\(|\\[", "", sub(",.*", "", as.character(bin)))) +
+      as.numeric(sub(".*,", "", sub("\\]|\\)", "", as.character(bin))))) /
+      2
+  )
+
+panel_c <- hist_c_binned |>
+  ggplot(aes(x = mid, y = n)) +
+  geom_col(fill = "grey40", color = "black", linewidth = 0.2, width = 0.24) +
+  geom_text(aes(label = n), vjust = -0.3, size = 1.8, color = "grey30") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    x = expression(log[10] ~ "(peak area + 1), treatment - control"),
+    y = NULL,
+    title = "CYP2J2"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+# --- Panel A: CYP3A4 log10fc histogram (fewer bins, with counts) ---
+hist_a_data <- react_summary |> filter(enzyme == "CYP3A4")
 hist_a_binned <- hist_a_data |>
   mutate(
     bin = cut(
@@ -62,46 +102,6 @@ hist_a_binned <- hist_a_data |>
   )
 
 panel_a <- hist_a_binned |>
-  ggplot(aes(x = mid, y = n)) +
-  geom_col(fill = "grey40", color = "black", linewidth = 0.2, width = 0.24) +
-  geom_text(aes(label = n), vjust = -0.3, size = 1.8, color = "grey30") +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
-  labs(
-    x = expression(log[10] ~ "(peak area + 1), treatment - control"),
-    y = NULL,
-    title = "CYP2J2"
-  ) +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor.x = element_blank()
-  )
-
-# --- Panel B: CYP3A4 log10fc histogram (fewer bins, with counts) ---
-hist_b_data <- react_summary |> filter(enzyme == "CYP3A4")
-hist_b_binned <- hist_b_data |>
-  mutate(
-    bin = cut(
-      log10fc,
-      breaks = seq(
-        floor(min(log10fc, na.rm = TRUE) * 4) / 4,
-        ceiling(max(log10fc, na.rm = TRUE) * 4) / 4,
-        by = 0.25
-      ),
-      include.lowest = TRUE
-    )
-  ) |>
-  count(bin) |>
-  mutate(
-    mid = (as.numeric(sub("\\(|\\[", "", sub(",.*", "", as.character(bin)))) +
-      as.numeric(sub(".*,", "", sub("\\]|\\)", "", as.character(bin))))) /
-      2
-  )
-
-panel_b <- hist_b_binned |>
   ggplot(aes(x = mid, y = n)) +
   geom_col(fill = "grey40", color = "black", linewidth = 0.2, width = 0.24) +
   geom_text(aes(label = n), vjust = -0.3, size = 1.8, color = "grey30") +
@@ -134,8 +134,8 @@ hex_theme <- theme(
   axis.text.x = element_text(angle = 0, hjust = 0.5)
 )
 
-# --- Hexbin CYP2J2 ---
-hex_2j2 <- react_summary |>
+# --- Panel D: CYP2J2 hexbin ---
+panel_d <- react_summary |>
   filter(enzyme == "CYP2J2") |>
   ggplot(aes(x = log10_control, y = log10_treatment)) +
   geom_hex(color = "black", linewidth = 0.3, bins = 30) +
@@ -184,8 +184,8 @@ hex_2j2 <- react_summary |>
   hex_theme +
   theme(legend.position = "none")
 
-# --- Hexbin CYP3A4 ---
-hex_3a4 <- react_summary |>
+# --- Panel B: CYP3A4 hexbin ---
+panel_b <- react_summary |>
   filter(enzyme == "CYP3A4") |>
   ggplot(aes(x = log10_control, y = log10_treatment)) +
   geom_hex(color = "black", linewidth = 0.3, bins = 30) +
@@ -239,7 +239,7 @@ hex_3a4 <- react_summary |>
     legend.background = element_blank()
   )
 
-# --- IC50 bin categories (shared by panels C and F) ---
+# --- IC50 bin categories (shared by panels E and F) ---
 ic50_levels <- c(
   "inactive",
   "10\u2013100 \u00b5M",
@@ -254,26 +254,36 @@ ic50_colors <- setNames(
 )
 
 inhib_binned <- inhibition_df |>
-  filter(!is.na(CYP3A4_pIC50)) |>
   mutate(
-    pIC50_plot = if_else(CYP3A4_pIC50 < 4, 2.875, CYP3A4_pIC50),
-    ic50_bin = cut(
-      CYP3A4_pIC50,
-      breaks = c(-Inf, 4, 5, 6, 7, Inf),
-      labels = ic50_levels,
-      right = FALSE
+    pIC50_plot = case_when(
+      # group inactive molecules together for histogram
+      is.na(CYP3A4_pIC50) ~ 2.875,
+      CYP3A4_pIC50 < 4 ~ 2.875,
+      .default = CYP3A4_pIC50
+    ),
+    ic50_bin = factor(
+      coalesce(
+        as.character(cut(
+          CYP3A4_pIC50,
+          breaks = c(-Inf, 4, 5, 6, 7, Inf),
+          labels = ic50_levels,
+          right = FALSE
+        )),
+        "inactive"
+      ),
+      levels = ic50_levels
     )
   )
 
-# shared x-axis for panels C and F
+# shared x-axis for panels E and F
 pIC50_x_scale <- scale_x_reverse(
   breaks = c(8, 7, 6, 5, 4, 2.875),
   labels = c("8", "7", "6", "5", "4", "inactive"),
   limits = c(8, 2.5)
 )
 
-# --- Panel C: pIC50 distribution histogram ---
-panel_c <- inhib_binned |>
+# --- Panel E: pIC50 distribution histogram ---
+panel_e <- inhib_binned |>
   ggplot(aes(x = pIC50_plot, fill = ic50_bin)) +
   geom_histogram(
     binwidth = 0.25,
@@ -322,9 +332,9 @@ inhib_react <- inhib_binned |>
   inner_join(react_3a4, by = "ocnt_batch")
 
 active_data <- inhib_react |> filter(CYP3A4_pIC50 >= 4)
-inactive_data <- inhib_react |> filter(CYP3A4_pIC50 < 4)
+inactive_data <- inhib_react |> filter(is.na(CYP3A4_pIC50) | CYP3A4_pIC50 < 4)
 
-panel_d <- ggplot() +
+panel_f <- ggplot() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
   geom_point(
     data = active_data,
@@ -358,11 +368,11 @@ panel_d <- ggplot() +
   )
 
 # --- assemble figure ---
-fig1 <- (panel_b | panel_a | panel_c) /
-  (hex_3a4 | hex_2j2 | panel_d) +
+fig1 <- (panel_a | panel_c | panel_e) /
+  (panel_b | panel_d | panel_f) +
   plot_layout(heights = c(1, 1))
 
 fig1 +
-  plot_annotation(tag_levels = "A") &
+  plot_annotation(tag_levels = list(c("A", "C", "E", "B", "D", "F"))) &
   theme(plot.tag = element_text(size = 16, face = "bold"))
 ```

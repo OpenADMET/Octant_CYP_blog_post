@@ -2,21 +2,17 @@
 #| label: figure-3-data
 #| cache: false
 
-from PIL import Image
-from io import BytesIO
 from bokeh.layouts import gridplot
 from bokeh.models import CustomJSTickFormatter
 from scipy.stats import gaussian_kde
 from concurrent.futures import ThreadPoolExecutor
-import base64
-import cairosvg
 
 # --- load IC50 data (copied by scripts/prepare_data.py) ---
 
 ic50 = pd.read_csv(repo_root / "data/inhibition.csv")
 ic50_avg = ic50.groupby("ocnt_batch").agg(
     CYP3A4_pIC50=("CYP3A4_pIC50", "mean"),
-    smiles=("smiles", "first"),
+    standardized_smiles=("standardized_smiles", "first"),
 ).reset_index()
 
 # --- load reactivity data & compute CYP3A4 % remaining ---
@@ -39,24 +35,22 @@ panel_b = ic50_avg.merge(
     react_b[["ocnt_batch", "pct_remaining"]],
     on="ocnt_batch",
     how="inner",
-).dropna()
+).dropna(subset=["pct_remaining"])
+
+# flag inactive compounds (no fitted IC50) and assign sentinel
+panel_b["inactive"] = panel_b["CYP3A4_pIC50"].isna()
+panel_b["CYP3A4_pIC50"] = panel_b["CYP3A4_pIC50"].fillna(1)
 
 # convert pIC50 to IC50 (molar)
 panel_b["IC50_M"] = 10 ** (-panel_b["CYP3A4_pIC50"])
 
-# --- molecule images (WEBP base64 for compact HTML) ---
+# tooltip label
+panel_b["pic50_label"] = panel_b["CYP3A4_pIC50"].apply(lambda v: f"{v:.1f}")
+panel_b.loc[panel_b["inactive"], "pic50_label"] = "Inactive"
 
-def smiles_to_webp(smiles, size=(300, 300), quality=90):
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return ""
-    img = Draw.MolToImage(mol, size=size)
-    buf = BytesIO()
-    img.save(buf, format="WEBP", quality=quality)
-    b64 = base64.b64encode(buf.getvalue()).decode()
-    return f"data:image/webp;base64,{b64}"
+# --- molecule images ---
 
-panel_b["mol_img"] = panel_b["smiles"].apply(smiles_to_webp)
+panel_b["mol_img"] = panel_b["standardized_smiles"].apply(smiles_to_webp)
 
 # --- DRC plot thumbnails as base64 (parallelized) ---
 
@@ -75,22 +69,10 @@ def png_to_base64_thumb(batch_id, width=300):
 with ThreadPoolExecutor() as pool:
     panel_b["drc_img"] = list(pool.map(png_to_base64_thumb, panel_b["ocnt_batch"]))
 
-# --- convert SVG strings to compact WEBP base64 ---
-
-def svg_to_webp_b64(svg_str, quality=90):
-    if not svg_str:
-        return ""
-    png_bytes = cairosvg.svg2png(bytestring=svg_str.encode("utf-8"), scale=2)
-    img = Image.open(BytesIO(png_bytes))
-    buf = BytesIO()
-    img.save(buf, format="WEBP", quality=quality)
-    b64 = base64.b64encode(buf.getvalue()).decode()
-    return f"data:image/webp;base64,{b64}"
-
-# --- swarm images (reuses make_swarm_svg & peak_areas from figure_1) ---
+# --- swarm images ---
 
 panel_b["swarm_img"] = panel_b["ocnt_batch"].map(
-    lambda b: svg_to_webp_b64(make_swarm_svg(b, peak_areas, enzymes=["CYP3A4"]))
+    lambda b: svg_to_webp_b64(make_swarm_svg(b, peak_areas_b, enzymes=["CYP3A4"]))
 )
 ```
 
@@ -110,16 +92,17 @@ def make_panel_b(panel_b):
         "drc_img": panel_b["drc_img"],
         "batch": panel_b["ocnt_batch"],
         "pic50": panel_b["CYP3A4_pIC50"],
+        "pic50_label": panel_b["pic50_label"],
     })
 
     TOOLTIPS_B = """
     <div style="width:580px;">
+        <div style="text-align:center;"><b>@batch</b> &mdash; pIC50: @pic50_label</div>
         <div style="display:flex; align-items:start; gap:6px;">
             <div><img src="@swarm_img{safe}" height="130"></div>
             <div><img src="@mol_img{safe}" width="150"></div>
             <div><img src="@drc_img{safe}" width="200"></div>
         </div>
-        <div><b>@batch</b> &mdash; pIC50: @pic50{0.2}</div>
     </div>
     """
 
@@ -129,6 +112,7 @@ def make_panel_b(panel_b):
     si_formatter = CustomJSTickFormatter(code="""
         const v = tick;
         if (v >= 1)       return v.toFixed(0) + ' M';
+        if (v > 0.05)     return 'Inactive';
         if (v >= 1e-3)    return (v * 1e3).toFixed(0) + ' mM';
         if (v >= 1e-6)    return (v * 1e6).toFixed(0) + ' µM';
         if (v >= 1e-9)    return (v * 1e9).toFixed(0) + ' nM';
@@ -149,7 +133,8 @@ def make_panel_b(panel_b):
     p.xaxis.axis_label_text_font_style = "normal"
     p.yaxis.axis_label_text_font_style = "normal"
     p.scatter("x", "y", source=source_b, size=6,
-              fill_alpha=0.5, line_color="white", line_width=0.5)
+              fill_alpha=0.35, line_color="white", line_width=0.5)
+    p.xaxis.minor_tick_line_color = None
     p.add_tools(HoverTool(tooltips=TOOLTIPS_B))
 
     # marginal density: top (IC50, log-space)

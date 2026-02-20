@@ -1,8 +1,11 @@
 ```{r}
 #| label: figure-4
-#| fig-width: 7
-#| fig-height: 8
+#| fig-width: 4
+#| fig-height: 5.3
+#| fig-dpi: 600
 #| cache: true
+
+theme_set(theme_pub(base_size = 8))
 
 # --- data loading ---
 rwt115_data <- readRDS(here("data", "rds", "RWT115_anno_data_df.RDS"))
@@ -31,7 +34,7 @@ rwt112_data <- readRDS(here("data", "rds", "RWT112_anno_data_df.RDS")) |>
   select(Sample, common_name, drug_M, peak_area)
 
 # --- panel A: evaporation ---
-fig_2a <- rwt115_data |>
+fig_4a <- rwt115_data |>
   filter(total_volume == 6.5) |>
   ggplot(aes(x = time_min, y = percent_volume, fill = DMSO_percent)) +
   stat_summary(
@@ -39,7 +42,7 @@ fig_2a <- rwt115_data |>
     geom = "point",
     mapping = aes(color = DMSO_percent, group = DMSO_percent),
     shape = 21,
-    size = 2,
+    size = 1,
     stroke = 0.3,
     show.legend = TRUE
   ) +
@@ -68,13 +71,19 @@ fig_2a <- rwt115_data |>
   scale_x_continuous(breaks = scales::breaks_width(60), labels = \(x) x / 60) +
   theme(
     legend.key.height = grid::unit(1, "null"),
-    axis.text.x = element_text(size = rel(1), hjust = 0.5, angle = 0),
-    axis.text.y = element_text(size = rel(1), angle = 0),
-    legend.frame = element_rect(colour = "black", linewidth = 0.5)
+    legend.title = element_text(size = rel(0.75), margin = margin(b = 8)),
+    legend.text = element_text(size = rel(0.65)),
+    axis.title = element_text(size = rel(0.75)),
+    axis.text.x = element_text(size = rel(0.75), hjust = 0.5, angle = 0),
+    axis.text.y = element_text(size = rel(0.75), angle = 0),
+    legend.frame = element_rect(colour = "black", linewidth = 0.5),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
   )
 
 # --- panel B top: phosphate activity ---
-fig_2b_top <- rwt92_norm_df |>
+fig_4b <- rwt92_norm_df |>
   filter(!empty_wells) |>
   filter(matrix == "no matrix added") |>
   mutate(
@@ -104,7 +113,13 @@ fig_2b_top <- rwt92_norm_df |>
     color = "white",
     show.legend = TRUE
   ) +
-  geom_smooth(linewidth = 0.5, show.legend = FALSE, se = FALSE) +
+  geom_smooth(
+    method = "loess",
+    formula = y ~ x,
+    linewidth = 0.5,
+    show.legend = FALSE,
+    se = FALSE
+  ) +
   scale_color_manual("", values = c("grey", cbpalette)) +
   scale_fill_manual("", values = c("grey", cbpalette)) +
   labs(
@@ -118,14 +133,20 @@ fig_2b_top <- rwt92_norm_df |>
   ) +
   theme(
     legend.key = element_blank(),
-    legend.position = "top",
-    legend.text = element_text(size = rel(0.7)),
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    panel.grid.major.x = element_blank()
+    legend.position = c(0.02, 0.2),
+    legend.justification = c(0, 0.5),
+    legend.background = element_blank(),
+    legend.text = element_text(size = rel(0.55)),
+    axis.title = element_text(size = rel(0.75)),
+    axis.text.x = element_text(size = rel(0.75), angle = 0, hjust = 0.5),
+    axis.text.y = element_text(size = rel(0.75)),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
   ) +
   guides(
-    color = guide_legend(ncol = 1, override.aes = list(size = 4)),
-    fill = guide_legend(ncol = 1, override.aes = list(size = 4))
+    color = guide_legend(ncol = 1, override.aes = list(size = 2)),
+    fill = NULL
   )
 
 # --- panel B bottom: signal improvement ---
@@ -140,88 +161,25 @@ fold_change_labels <- rwt112_data |>
     .groups = "drop"
   )
 
-fig_2b_bottom <- rwt112_data |>
-  mutate(
-    Sample = factor(
-      Sample,
-      levels = c("Std CYP reaction", "Optimized CYP matrix")
-    ),
-    common_name = factor(
-      common_name,
-      levels = c(
-        "Albendazole",
-        "Midazolam",
-        "AdipoRon",
-        "Propranolol",
-        "Conivaptan",
-        "Phenacetin",
-        "Testosterone",
-        "Racecadotril"
-      )
-    )
-  ) |>
-  droplevels() |>
-  ggplot(aes(x = common_name, y = peak_area, fill = Sample)) +
-  stat_summary(
-    position = position_dodge(0.7),
-    geom = "col",
-    fun = "mean",
-    color = "white",
-    width = 0.5
-  ) +
-  geom_beeswarm(
-    shape = 21,
-    color = "white",
-    size = 1,
-    cex = 1,
-    show.legend = FALSE,
-    dodge.width = 0.7
-  ) +
-  geom_label(
-    aes(label = paste0(fold_change, "x"), y = peak_area),
-    data = fold_change_labels,
-    size = 1.5,
-    color = "white",
-    show.legend = FALSE
-  ) +
-  scale_fill_manual("", values = cbpalette) +
-  scale_y_continuous(
-    labels = scales::label_comma(),
-    transform = scales::pseudo_log_trans(sigma = 10),
-    breaks = c(0, 1e2, 1e3, 1e4, 1e5)
-  ) +
-  labs(
-    x = NULL,
-    y = "Peak Area",
-    title = NULL
-  ) +
-  theme(
-    legend.position = "top",
-    legend.key = element_blank(),
-    panel.grid.major.x = element_blank(),
-    panel.grid.major.y = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
-  )
-
-# --- panel D: structure image ---
-fig_2d <- wrap_elements(
+# --- panel C: platemap image ---
+fig_4c <- wrap_elements(
   grid::rasterGrob(
     png::readPNG(here(
       "post",
       "figures",
       "assets",
-      "Jan_2026_OpenADMET_CYP_blog_2D.png"
+      "figure_4C.png"
     )),
     interpolate = TRUE
   )
-)
+) + theme(plot.margin = margin(t = -10))
 
 # --- assemble figure ---
-fig_2 <- (free(fig_2a, type = "label") | (fig_2b_top / fig_2b_bottom)) /
-  fig_2d +
-  plot_layout(heights = c(1, 1))
+fig_4 <- (free(fig_4a, type = "label") + fig_4b) /
+  fig_4c +
+  plot_layout(heights = c(1, 1.4))
 
-fig_2 +
+fig_4 +
   plot_annotation(tag_levels = "A") &
-  theme(plot.tag = element_text(size = 16, face = "bold"))
+  theme(plot.tag = element_text(size = 10, face = "bold"))
 ```

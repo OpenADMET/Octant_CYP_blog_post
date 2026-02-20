@@ -25,4 +25,6 @@ dependencies = [
     # Image processing (SVG→raster for compact tooltips)
     "Pillow",
     "cairosvg",
+    # Database access
+    "databricks-sql-connector",
 ]

@@ -4,6 +4,8 @@
 #| fig-height: 6
 #| cache: true
 
+theme_set(theme_pub(base_size = 12))
+
 # --- data loading ---
 clearance_df <- read_tsv(
   here("data", "clearance_snippet.tsv"),
@@ -195,7 +197,7 @@ panel_b <- ggplot() +
     legend.position = c(0, 0),
     legend.justification = c(0, 0),
     legend.background = element_blank(),
-    legend.text = element_text(size = rel(0.7)),
+    legend.text = element_text(margin = margin(l = -1), size = rel(0.7)),
     legend.key = element_blank(),
     panel.grid.major.x = element_blank(),
     panel.grid.major.y = element_blank(),

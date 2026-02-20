@@ -39,6 +39,8 @@ axis_max <- ceiling(max(
 ))
 shared_ylim <- c(0, axis_max)
 
+theme_set(theme_pub(base_size = 12))
+
 # --- main hexplot ---
 hex_panel <- wif |>
   ggplot(aes(x = log10_amformate, y = log10_amfluoride)) +
