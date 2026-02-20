@@ -2,9 +2,6 @@
 /.quarto/
 **/*.quarto_ipynb
 *_cache/
-*_files/
-_site/
-*.html
 *.rmarkdown
 
 # Otter (Neovim R plugin) hidden buffers

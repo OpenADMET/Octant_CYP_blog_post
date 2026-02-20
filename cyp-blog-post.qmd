@@ -4,7 +4,7 @@ author: "Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi 
 date: today
 format:
   html:
-    embed-resources: true
+    embed-resources: false
     output-file: index.html
 ---
 
