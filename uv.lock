@@ -427,6 +427,7 @@ dependencies = [
     { name = "pillow" },
     { name = "radian" },
     { name = "rdkit" },
+    { name = "requests" },
     { name = "scipy" },
 ]
 
@@ -441,6 +442,7 @@ requires-dist = [
     { name = "pillow" },
     { name = "radian" },
     { name = "rdkit" },
+    { name = "requests" },
     { name = "scipy" },
 ]
 

@@ -8,7 +8,7 @@ from scipy.stats import gaussian_kde
 
 # --- load data (pre-filtered by scripts/prepare_data.py) ---
 
-peak_areas = pd.read_csv(repo_root / "data/reactivity.csv")
+peak_areas = pd.read_csv(repo_root / "data/reactivity.tsv", sep="\t")
 
 cpds = peak_areas[["ocnt_batch", "standardized_smiles"]].drop_duplicates(subset="ocnt_batch")
 

@@ -4,15 +4,11 @@ author: "Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi 
 date: today
 format:
   html:
-    embed-resources: false
+    embed-resources: true
     output-file: index.html
 ---
 
-## Setup R environment
-
 {{< include post/_setup_r.qmd >}}
-
-## Setup Python environment
 
 {{< include post/_setup_python.qmd >}}
 

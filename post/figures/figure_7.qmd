@@ -1,8 +1,6 @@
 ```{r}
 #| label: figure-7
-#| fig-width: 10
-#| fig-height: 6
-#| cache: true
+#| cache: false
 
 theme_set(theme_pub(base_size = 12))
 
@@ -129,19 +127,19 @@ panel_b <- ggplot() +
     "text",
     x = ic50_no_preinc + 0.8,
     y = 0.5,
-    label = expression(Delta * "pIC"[50]),
+    label = expression(Delta ~~ "pIC"[50]),
     size = 3,
     color = "red",
     fontface = "bold"
   ) +
   geom_line(
-    data = drc_curves,
+    data = drc_curves |> filter(drug == "troleandomycin"),
     aes(x = log10_drug_M, y = norm_value, color = condition),
     linewidth = 0.8,
     show.legend = FALSE
   ) +
   geom_point(
-    data = drc_points,
+    data = drc_points |> filter(drug == "troleandomycin"),
     aes(x = log10_conc, y = norm_value, fill = condition),
     shape = 21,
     color = "black",
@@ -157,12 +155,15 @@ panel_b <- ggplot() +
     color = "red",
     linewidth = 0.6
   ) +
-  geom_point(
+  annotate(
+    "point",
     x = ic50_no_preinc,
     y = 0.5,
-    color = "red",
-    size = 10,
-    show.legend = FALSE
+    fill = "red",
+    color = "black",
+    shape = 21,
+    size = 3,
+    stroke = 0.5
   ) +
   scale_color_manual(
     values = c(
@@ -206,76 +207,184 @@ panel_b <- ggplot() +
   )
 
 # ============================================================
-# Panel B: pIC50 shift estimates for TDI classification
+# Panel C: Interactive forest plot with DRC tooltip images
 # ============================================================
 
-# Known TDI compounds (preincubation causes a large pIC50 shift)
-known_tdi <- c("troleandomycin", "azamulin", "verapamil", "diltiazem")
-tdi_cutoff <- log10(2) # 2-fold shift on log10 scale
+# --- Generate base64 DRC tooltip images for each drug ---
+drug_list <- unique(drc_params$drug)
 
-panel_b_df <- tdi_df |>
+make_drc_plot <- function(drug_name) {
+  d_curves <- drc_curves |> filter(drug == drug_name)
+  d_points <- drc_points |> filter(drug == drug_name)
+  d_params <- drc_params |> filter(drug == drug_name)
+
+  ic50_no <- -d_params$estimate_pIC50[!d_params$preincubation]
+  ic50_pre <- -d_params$estimate_pIC50[d_params$preincubation]
+
+  ggplot() +
+    annotate(
+      "rect",
+      xmin = min(ic50_pre, ic50_no),
+      xmax = max(ic50_pre, ic50_no),
+      ymin = -Inf, ymax = Inf,
+      fill = "red", alpha = 0.2,
+      color = "red", linewidth = 0.3
+    ) +
+    geom_line(
+      data = d_curves,
+      aes(x = log10_drug_M, y = norm_value, color = condition),
+      linewidth = 0.7
+    ) +
+    geom_point(
+      data = d_points,
+      aes(x = log10_conc, y = norm_value, fill = condition),
+      shape = 21, color = "black", size = 1.5
+    ) +
+    annotate(
+      "segment",
+      x = ic50_no, y = 0.5,
+      xend = ic50_pre, yend = 0.5,
+      arrow = arrow(length = unit(0.08, "inches"), type = "closed"),
+      color = "red", linewidth = 0.5
+    ) +
+    annotate(
+      "point",
+      x = ic50_no, y = 0.5,
+      fill = "red", color = "black",
+      shape = 21, size = 2.5, stroke = 0.4
+    ) +
+    scale_color_manual(
+      values = c(
+        "No preincubation" = "grey60",
+        "30 min preincubation" = "black"
+      )
+    ) +
+    scale_fill_manual(
+      values = c(
+        "No preincubation" = "grey60",
+        "30 min preincubation" = "black"
+      )
+    ) +
+    scale_x_continuous(
+      breaks = seq(-10, -4, 2),
+      limits = c(-10, -4),
+      labels = \(x) parse(text = paste0("10^{", x, "}"))
+    ) +
+    scale_y_continuous(
+      labels = scales::label_percent(),
+      breaks = c(0, 0.5, 1)
+    ) +
+    labs(
+      x = "Concentration (M)",
+      y = "% Activity",
+      color = NULL, fill = NULL
+    ) +
+    theme_pub(base_size = 9) +
+    theme(
+      legend.position = c(0, 0),
+      legend.justification = c(0, 0),
+      legend.background = element_blank(),
+      legend.text = element_text(margin = margin(l = 2), size = rel(0.7)),
+      legend.key = element_blank(),
+      legend.key.spacing.x = unit(2, "pt"),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      axis.text.x = element_text(angle = 0, hjust = 0.5),
+      plot.margin = margin(2, 4, 2, 2)
+    )
+}
+
+# Render each drug's DRC plot to a base64 PNG string
+drc_b64 <- setNames(
+  vapply(drug_list, function(d) {
+    p <- make_drc_plot(d)
+    tmp <- tempfile(fileext = ".png")
+    ggsave(tmp, p, width = 3.5, height = 2.5, dpi = 150, bg = "white")
+    b64 <- base64enc::base64encode(tmp)
+    unlink(tmp)
+    paste0("data:image/png;base64,", b64)
+  }, character(1)),
+  drug_list
+)
+
+# --- Build interactive forest plot data ---
+known_tdi <- c("troleandomycin", "azamulin", "verapamil", "diltiazem")
+tdi_cutoff <- log10(2)
+
+panel_c_df <- tdi_df |>
   mutate(
     is_tdi = drug %in% known_tdi,
     drug = fct_relevel(drug, known_tdi, after = 0),
     x = as.numeric(drug)
   )
 
-n_drugs <- nrow(panel_b_df)
-n_tdi <- sum(panel_b_df$is_tdi)
-y_top <- max(panel_b_df$delta_q97.5) + 0.25
-drug_labels <- levels(panel_b_df$drug)
+n_drugs <- nrow(panel_c_df)
+n_tdi <- sum(panel_c_df$is_tdi)
+y_top <- max(panel_c_df$delta_q97.5) + 0.25
+drug_labels <- levels(panel_c_df$drug)
 
-panel_c <- panel_b_df |>
+# Build tooltip HTML for each drug
+panel_c_df <- panel_c_df |>
+  rowwise() |>
+  mutate(
+    tooltip_html = {
+      img_src <- drc_b64[as.character(drug)]
+      paste0(
+        '<div style="text-align:center;padding:4px;">',
+        '<b style="font-size:13px;">', drug, '</b><br>',
+        '\u0394pIC<sub>50</sub>: ',
+        sprintf("%.2f [%.2f, %.2f]", delta_mean, `delta_q2.5`, `delta_q97.5`),
+        '<br>',
+        '<img src="', img_src, '" width="350">',
+        '</div>'
+      )
+    }
+  ) |>
+  ungroup()
+
+# Build the interactive panel C ggplot
+panel_c <- panel_c_df |>
   ggplot(aes(x = x, y = delta_mean)) +
   # background shading
   annotate(
     "rect",
-    xmin = -Inf,
-    xmax = Inf,
-    ymin = -0.15,
-    ymax = tdi_cutoff,
-    fill = "grey80",
-    alpha = 0.5
+    xmin = -Inf, xmax = Inf,
+    ymin = -0.15, ymax = tdi_cutoff,
+    fill = "grey80", alpha = 0.5
   ) +
   # reference lines
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
   geom_hline(
     yintercept = tdi_cutoff,
-    linetype = "dotted",
-    linewidth = 0.6,
-    color = "grey30"
+    linetype = "dotted", linewidth = 0.6, color = "grey30"
   ) +
   # TDI cutoff label
   annotate(
     "text",
-    x = n_drugs + 0.4,
-    y = tdi_cutoff + 0.1,
+    x = n_drugs + 0.4, y = tdi_cutoff + 0.1,
     label = "TDI cutoff = 2-fold shift",
-    hjust = 1,
-    size = 2.8,
-    color = "grey30",
-    fontface = "italic"
+    hjust = 1, size = 2.8, color = "grey30", fontface = "italic"
   ) +
   # separating line between known TDI and controls
   geom_vline(
     xintercept = n_tdi + 0.5,
-    linetype = "dotted",
-    color = "grey50",
-    linewidth = 0.4
+    linetype = "dotted", color = "grey50", linewidth = 0.4
   ) +
-  # data: error bars + points
-  geom_errorbar(
-    aes(ymin = `delta_q2.5`, ymax = `delta_q97.5`),
-    width = 0.25,
-    linewidth = 0.5,
-    color = "black"
+  # interactive error bars
+  geom_errorbar_interactive(
+    aes(
+      ymin = `delta_q2.5`, ymax = `delta_q97.5`,
+      tooltip = tooltip_html, data_id = drug
+    ),
+    width = 0.25, linewidth = 0.5, color = "black"
   ) +
-  geom_point(
-    aes(fill = is_tdi),
-    shape = 21,
-    size = 2,
-    color = "black",
-    stroke = 0.5
+  # interactive points
+  geom_point_interactive(
+    aes(
+      fill = is_tdi,
+      tooltip = tooltip_html, data_id = drug
+    ),
+    shape = 21, size = 3, color = "black", stroke = 0.5
   ) +
   scale_fill_manual(
     values = c("TRUE" = "black", "FALSE" = "grey80"),
@@ -289,20 +398,14 @@ panel_c <- panel_b_df |>
   # group labels
   annotate(
     "text",
-    x = (1 + n_tdi) / 2,
-    y = y_top - 0.1,
-    label = "Known TDI",
-    fontface = "bold",
-    size = 3
+    x = (1 + n_tdi) / 2, y = y_top - 0.1,
+    label = "Known TDI", fontface = "bold", size = 3
   ) +
   annotate(
     "text",
-    x = n_tdi + 0.5 + (n_drugs - n_tdi) / 2,
-    y = y_top - 0.1,
+    x = n_tdi + 0.5 + (n_drugs - n_tdi) / 2, y = y_top - 0.1,
     label = "Non-TDI controls",
-    fontface = "bold",
-    size = 3,
-    lineheight = 0.85
+    fontface = "bold", size = 3, lineheight = 0.85
   ) +
   labs(
     x = NULL,
@@ -316,7 +419,7 @@ panel_c <- panel_b_df |>
   )
 
 # ============================================================
-# Assemble with patchwork
+# Assemble with patchwork, then render via girafe()
 # ============================================================
 tag_theme <- theme(plot.tag = element_text(size = 16, face = "bold"))
 
@@ -335,17 +438,38 @@ arrow_panel <- ggplot() +
   scale_y_continuous(limits = c(0, 1)) +
   theme_void()
 
-# Manual tags: only A and B, nothing on arrow or forest plot
+# Manual tags
 panel_a_tagged <- panel_a + labs(tag = "A") + tag_theme
 panel_b_tagged <- panel_b + labs(tag = "B") + tag_theme
+panel_c_tagged <- panel_c +
+  labs(subtitle = "mouse over points to see underlying data") +
+  theme(plot.subtitle = element_text(color = "blue", face = "italic", size = 9))
 
 bottom_row <- wrap_plots(
   free(panel_b_tagged, type = "label"),
   arrow_panel,
-  panel_c,
+  panel_c_tagged,
   widths = c(3, 1, 5)
 )
 
-(panel_a_tagged / bottom_row) +
+full_fig <- (panel_a_tagged / bottom_row) +
   plot_layout(heights = c(1, 1))
+
+girafe(
+  ggobj = full_fig,
+  width_svg = 10,
+  height_svg = 6,
+  options = list(
+    opts_tooltip(
+      css = "background:white;border:1px solid #ccc;border-radius:6px;padding:6px;box-shadow:2px 2px 6px rgba(0,0,0,0.15);",
+      use_fill = FALSE,
+      delay_mouseout = 500
+    ),
+    opts_hover(
+      css = "fill:orange;stroke:orange;cursor:pointer;",
+      nearest_distance = 50
+    ),
+    opts_sizing(rescale = TRUE, width = 1)
+  )
+)
 ```

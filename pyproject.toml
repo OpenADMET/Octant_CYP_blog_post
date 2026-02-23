@@ -27,4 +27,7 @@ dependencies = [
     "cairosvg",
     # Database access
     "databricks-sql-connector",
+
+    # Argo LIMS API
+    "requests",
 ]

@@ -20,15 +20,13 @@ renv::init(
 depends <- c(
   "ggbeeswarm",
   "ggh4x",
-  "ggpubr",
+  "ggiraph",
   "ggthemes",
   "here",
   "hexbin",
   "paletteer",
   "patchwork",
-  "plotly",
   "png",
-  "reticulate",
   "scico",
   "tidyverse"
 )
@@ -50,9 +48,8 @@ library(tidyverse)
 library(ggplot2)
 library(ggbeeswarm)
 library(ggh4x)
-library(ggpubr)
+library(ggiraph)
 library(patchwork)
-library(plotly)
 library(here)
 
 source(here("R", "helpers.R"))

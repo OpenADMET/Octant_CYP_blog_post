@@ -6,8 +6,8 @@
 #| cache: true
 
 # --- data loading ---
-reactivity_raw <- read_csv(here("data", "reactivity.csv"))
-inhibition_df <- read_csv(here("data", "inhibition.csv"))
+reactivity_raw <- read_tsv(here("data", "reactivity.tsv"))
+inhibition_df <- read_tsv(here("data", "inhibition.tsv"))
 
 # --- summarize reactivity replicates ---
 react_summary <- reactivity_raw |>
