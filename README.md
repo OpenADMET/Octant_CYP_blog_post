@@ -30,6 +30,13 @@ quarto render cyp-blog-post.qmd
 
 Output is written to `_site/index.html`.
 
+## Protocols
+
+Experimental protocols used to generate the datasets in this blog post:
+
+- [CYP Reactivity Assay](protocols/cyp_reactivity_assay.md) — CYP3A4/CYP2J2 reactivity screening via SCIEX Echo MS+ ZenoTOF 7600
+- [CYP3A4 Inhibition Assay](protocols/cyp_inhibition_assay.md) — CYP3A4 inhibition (active preincubation) via fluorescence readout
+
 ## Data
 
 All data is in `data/`:
