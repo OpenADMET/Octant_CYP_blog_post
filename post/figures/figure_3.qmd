@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 # --- load IC50 data (copied by scripts/prepare_data.py) ---
 
-ic50 = pd.read_csv(repo_root / "data/inhibition.csv")
+ic50 = pd.read_csv(repo_root / "data/inhibition.tsv", sep="\t")
 ic50_avg = ic50.groupby("ocnt_batch").agg(
     CYP3A4_pIC50=("CYP3A4_pIC50", "mean"),
     standardized_smiles=("standardized_smiles", "first"),
@@ -17,7 +17,7 @@ ic50_avg = ic50.groupby("ocnt_batch").agg(
 
 # --- load reactivity data & compute CYP3A4 % remaining ---
 
-peak_areas_b = pd.read_csv(repo_root / "data/reactivity.csv")
+peak_areas_b = pd.read_csv(repo_root / "data/reactivity.tsv", sep="\t")
 
 react_b = (
     peak_areas_b[peak_areas_b["enzyme"] == "CYP3A4"]
@@ -55,7 +55,7 @@ panel_b["mol_img"] = panel_b["standardized_smiles"].apply(smiles_to_webp)
 # --- DRC plot thumbnails as base64 (parallelized) ---
 
 def png_to_base64_thumb(batch_id, width=300):
-    path = repo_root / f"data/drc-plots/{batch_id}_c7111_no-ctrls.png"
+    path = repo_root / f"data/inhibition_drc-plots/{batch_id}_c7111_no-ctrls.png"
     if not path.exists():
         return ""
     img = Image.open(path)

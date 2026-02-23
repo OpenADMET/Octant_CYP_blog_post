@@ -21,10 +21,6 @@ __pycache__/
 *.Rdata
 *.Rhistory
 
-# DRC plots - only keep no-controls versions
-data/drc-plots/*
-!data/drc-plots/*_no-ctrls.png
-
 # Preprocessing scripts & raw data
 scripts/
 data/raw/

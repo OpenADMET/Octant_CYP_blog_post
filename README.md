@@ -51,5 +51,5 @@ All data is in `data/`:
 | `tdi_drc_params.tsv`    | Fitted DRC parameters (pIC50, Hill slope, CIs) for TDI compounds                                                 | ~12     |
 | `tdi_drc_points.tsv`    | Raw DRC measurement points for TDI compounds                                                                     | ~24     |
 | `tdi_pic50_shift.tsv`   | pIC50 shift estimates (±preincubation) for TDI compounds                                                         | ~6      |
-| `drc-plots/`            | Dose-response curve images (1,343 PNGs, no-controls versions) used as tooltips in Figure 3                       | —       |
+| `inhibition_drc-plots/`            | Dose-response curve images (1,343 PNGs, no-controls versions) used as tooltips in Figure 3                       | —       |
 | `rds/`                  | Preprocessed R data objects for Figure 4 assay development panels                                                | —       |
