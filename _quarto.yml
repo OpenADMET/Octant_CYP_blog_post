@@ -33,6 +33,7 @@ format:
               display: block;
               margin-left: auto;
               margin-right: auto;
+              margin-bottom: 0;
               text-align: center;
             }
             /* Spacing: paragraphs, headings, figures, lists */
@@ -54,6 +55,19 @@ format:
             }
             /* Fix ggiraph fullscreen: height:90vw is a bug (should be width) */
             .ggiraph-fullscreen-content { height: auto; width: 90vw; }
+            .ggiraph-fullscreen-content:has(.ggiraph-fullscreen-caption) {
+              flex-direction: column;
+            }
+            .ggiraph-fullscreen-caption {
+              font-size: 0.8em;
+              color: #000;
+              line-height: 1.4;
+              padding: 8px 20px 0;
+              text-align: left;
+              max-height: 15vh;
+              overflow-y: auto;
+              margin-top: auto;
+            }
             /* Instant CSS tooltips for citation links */
             .cite-tip { position: relative; }
             .cite-tip:hover::after {
@@ -76,6 +90,51 @@ format:
               pointer-events: none;
             }
           </style>
+    include-after-body:
+      - text: |
+          <script>
+            // Copy figure captions into lightbox descriptions
+            document.querySelectorAll('.figure-caption').forEach(function(cap) {
+              var prev = cap.previousElementSibling;
+              if (!prev) return;
+              var link = prev.querySelector('a.lightbox');
+              if (!link) return;
+              link.setAttribute('data-description', cap.innerHTML);
+            });
+
+            // Inject figure captions into ggiraph fullscreen modals.
+            // Pre-build SVG→caption map after widgets initialize (load event),
+            // because openModal() moves the SVG out of .cell before the
+            // MutationObserver callback fires.
+            window.addEventListener('load', function() {
+              var svgCaptions = {};
+              document.querySelectorAll('.ggiraph-svg').forEach(function(svg) {
+                var cell = svg.closest('.cell');
+                if (!cell) return;
+                var sib = cell.nextElementSibling;
+                while (sib && !sib.classList.contains('figure-caption')) {
+                  sib = sib.nextElementSibling;
+                }
+                if (sib) svgCaptions[svg.id] = sib;
+              });
+              new MutationObserver(function(mutations) {
+                mutations.forEach(function(m) {
+                  m.addedNodes.forEach(function(node) {
+                    if (node.nodeType !== 1) return;
+                    if (!node.classList.contains('ggiraph-fullscreen-modal')) return;
+                    var svgId = node.id.replace('_fullscreen_modal', '');
+                    var caption = svgCaptions[svgId];
+                    if (!caption) return;
+                    var content = node.querySelector('.ggiraph-fullscreen-content');
+                    if (!content) return;
+                    var clone = caption.cloneNode(true);
+                    clone.className = 'ggiraph-fullscreen-caption';
+                    content.appendChild(clone);
+                  });
+                });
+              }).observe(document.body, { childList: true });
+            });
+          </script>
 execute:
   warning: false
 knitr:
