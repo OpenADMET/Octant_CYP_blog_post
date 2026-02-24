@@ -72,102 +72,105 @@ ic50_react["swarm_img"] = ic50_react["ocnt_batch"].map(
 #| label: figure-3-plot
 #| cache: false
 
-x = ic50_react["IC50_M"].values
-y = ic50_react["pct_remaining"].values
+def make_figure_3():
+    x = ic50_react["IC50_M"].values
+    y = ic50_react["pct_remaining"].values
 
-source = ColumnDataSource(data={
-    "x": x,
-    "y": y,
-    "mol_img": ic50_react["mol_img"],
-    "swarm_img": ic50_react["swarm_img"],
-    "drc_img": ic50_react["drc_img"],
-    "batch": ic50_react["ocnt_batch"],
-    "pic50": ic50_react["CYP3A4_pIC50"],
-    "pic50_label": ic50_react["pic50_label"],
-})
+    source = ColumnDataSource(data={
+        "x": x,
+        "y": y,
+        "mol_img": ic50_react["mol_img"],
+        "swarm_img": ic50_react["swarm_img"],
+        "drc_img": ic50_react["drc_img"],
+        "batch": ic50_react["ocnt_batch"],
+        "pic50": ic50_react["CYP3A4_pIC50"],
+        "pic50_label": ic50_react["pic50_label"],
+    })
 
-TOOLTIPS = """
-<div style="width:580px;">
-    <div style="text-align:center;"><b>@batch</b> &mdash; pIC50: @pic50_label</div>
-    <div style="display:flex; align-items:start; gap:6px;">
-        <div><img src="@swarm_img{safe}" height="130"></div>
-        <div><img src="@mol_img{safe}" width="150"></div>
-        <div><img src="@drc_img{safe}" width="200"></div>
+    TOOLTIPS = """
+    <div style="width:580px;">
+        <div style="text-align:center;"><b>@batch</b> &mdash; pIC50: @pic50_label</div>
+        <div style="display:flex; align-items:start; gap:6px;">
+            <div><img src="@swarm_img{safe}" height="130"></div>
+            <div><img src="@mol_img{safe}" width="150"></div>
+            <div><img src="@drc_img{safe}" width="200"></div>
+        </div>
     </div>
-</div>
-"""
+    """
 
-lo_y = min(y.min(), 0) - 5
-hi_y = max(y.max(), 105) + 5
+    lo_y = min(y.min(), 0) - 5
+    hi_y = max(y.max(), 105) + 5
 
-si_formatter = CustomJSTickFormatter(code="""
-    const v = tick;
-    if (v >= 1)       return v.toFixed(0) + ' M';
-    if (v > 0.05)     return 'Inactive';
-    if (v >= 1e-3)    return (v * 1e3).toFixed(0) + ' mM';
-    if (v >= 1e-6)    return (v * 1e6).toFixed(0) + ' µM';
-    if (v >= 1e-9)    return (v * 1e9).toFixed(0) + ' nM';
-    if (v >= 1e-12)   return (v * 1e12).toFixed(0) + ' pM';
-    return v.toExponential(1) + ' M';
-""")
+    si_formatter = CustomJSTickFormatter(code="""
+        const v = tick;
+        if (v >= 1)       return v.toFixed(0) + ' M';
+        if (v > 0.05)     return 'Inactive';
+        if (v >= 1e-3)    return (v * 1e3).toFixed(0) + ' mM';
+        if (v >= 1e-6)    return (v * 1e6).toFixed(0) + ' µM';
+        if (v >= 1e-9)    return (v * 1e9).toFixed(0) + ' nM';
+        if (v >= 1e-12)   return (v * 1e12).toFixed(0) + ' pM';
+        return v.toExponential(1) + ' M';
+    """)
 
-# main scatter
-p = bokeh_figure(
-    width=500, height=500,
-    x_axis_label="CYP3A4 IC50",
-    y_axis_label="CYP3A4 (% remaining)",
-    x_axis_type="log",
-    tools="pan,wheel_zoom,box_zoom,reset,save",
-    y_range=(lo_y, hi_y),
-)
-p.xaxis.formatter = si_formatter
-p.xaxis.axis_label_text_font_style = "normal"
-p.yaxis.axis_label_text_font_style = "normal"
-p.scatter("x", "y", source=source, size=6,
-          fill_alpha=0.35, line_color="white", line_width=0.5)
-p.xaxis.minor_tick_line_color = None
-p.add_tools(HoverTool(tooltips=TOOLTIPS))
+    # main scatter
+    p = bokeh_figure(
+        width=500, height=500,
+        x_axis_label="CYP3A4 IC50",
+        y_axis_label="CYP3A4 (% remaining)",
+        x_axis_type="log",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        y_range=(lo_y, hi_y),
+    )
+    p.xaxis.formatter = si_formatter
+    p.xaxis.axis_label_text_font_style = "normal"
+    p.yaxis.axis_label_text_font_style = "normal"
+    p.scatter("x", "y", source=source, size=6,
+              fill_alpha=0.35, line_color="white", line_width=0.5)
+    p.xaxis.minor_tick_line_color = None
+    p.add_tools(HoverTool(tooltips=TOOLTIPS))
 
-# marginal density: top (IC50, log-space)
-log_x = np.log10(x)
-x_kde = gaussian_kde(log_x)
-log_grid = np.linspace(log_x.min() - 0.3, log_x.max() + 0.3, 300)
-x_grid = 10 ** log_grid
-x_dens = x_kde(log_grid)
+    # marginal density: top (IC50, log-space)
+    log_x = np.log10(x)
+    x_kde = gaussian_kde(log_x)
+    log_grid = np.linspace(log_x.min() - 0.3, log_x.max() + 0.3, 300)
+    x_grid = 10 ** log_grid
+    x_dens = x_kde(log_grid)
 
-ph = bokeh_figure(
-    width=p.width, height=120, x_range=p.x_range,
-    x_axis_type="log",
-    tools="", toolbar_location=None,
-)
-ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
-ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
-ph.xaxis.visible = False
-ph.yaxis.visible = False
-ph.outline_line_color = None
-ph.grid.visible = False
-ph.min_border_bottom = 0
-ph.min_border_left = p.min_border_left
+    ph = bokeh_figure(
+        width=p.width, height=120, x_range=p.x_range,
+        x_axis_type="log",
+        tools="", toolbar_location=None,
+    )
+    ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
+    ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
+    ph.xaxis.visible = False
+    ph.yaxis.visible = False
+    ph.outline_line_color = None
+    ph.grid.visible = False
+    ph.min_border_bottom = 0
+    ph.min_border_left = p.min_border_left
 
-# marginal density: right (% remaining)
-y_kde = gaussian_kde(y)
-y_grid = np.linspace(lo_y, hi_y, 300)
-y_dens = y_kde(y_grid)
+    # marginal density: right (% remaining)
+    y_kde = gaussian_kde(y)
+    y_grid = np.linspace(lo_y, hi_y, 300)
+    y_dens = y_kde(y_grid)
 
-pv = bokeh_figure(
-    width=120, height=p.height, y_range=p.y_range,
-    tools="", toolbar_location=None,
-)
-pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
-pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
-pv.xaxis.visible = False
-pv.yaxis.visible = False
-pv.outline_line_color = None
-pv.grid.visible = False
-pv.min_border_bottom = p.min_border_bottom
-pv.min_border_left = 0
+    pv = bokeh_figure(
+        width=120, height=p.height, y_range=p.y_range,
+        tools="", toolbar_location=None,
+    )
+    pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
+    pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
+    pv.xaxis.visible = False
+    pv.yaxis.visible = False
+    pv.outline_line_color = None
+    pv.grid.visible = False
+    pv.min_border_bottom = p.min_border_bottom
+    pv.min_border_left = 0
 
-layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
-script, div = components(layout)
-HTML(CDN.render() + div + script)
+    layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
+    script, div = components(layout)
+    return HTML(CDN.render() + div + script)
+
+make_figure_3()
 ```
