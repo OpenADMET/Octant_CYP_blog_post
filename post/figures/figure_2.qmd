@@ -62,7 +62,7 @@ TOOLTIPS = """
 </div>
 """
 
-def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
+def marginal_scatter(df, xcol, ycol, xlabel, ylabel):
     x = df[xcol].values
     y = df[ycol].values
 
@@ -96,7 +96,7 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
 
     ph = bokeh_figure(
         width=p.width, height=120, x_range=p.x_range,
-        title=title, tools="", toolbar_location=None,
+        tools="", toolbar_location=None,
     )
     ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
     ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
@@ -131,7 +131,7 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
 ```
 
 ```{python}
-#| label: figure-2-pct
+#| label: figure-2-plot
 #| cache: false
 
 
@@ -139,6 +139,5 @@ marginal_scatter(
     react_pct, "CYP3A4", "CYP2J2",
     xlabel="CYP3A4 (% remaining)",
     ylabel="CYP2J2 (% remaining)",
-    title="CYP3A4 vs CYP2J2 \u2014 % remaining",
 )
 ```

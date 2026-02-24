@@ -8,8 +8,6 @@ import hashlib
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from io import BytesIO
-from PIL import Image
 from rdkit import Chem
 from rdkit.Chem.Draw import rdMolDraw2D
 from bokeh.plotting import figure as bokeh_figure, show
