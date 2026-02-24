@@ -1,0 +1,75 @@
+project:
+  output-dir: _site
+  render:
+    - cyp-blog-post.qmd
+format:
+  html:
+    # self-contained: true  # re-enable for final publish
+    toc: true
+    toc-location: left
+    smooth-scroll: true
+    number-sections: false
+    lightbox: true
+    mainfont: "Inter, sans-serif"
+    include-in-header:
+      - text: |
+          <link rel="preconnect" href="https://rsms.me/">
+          <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+          <style>
+            :root { font-feature-settings: 'liga' 1, 'calt' 1; }
+            @supports (font-variation-settings: normal) {
+              :root { font-family: InterVariable, sans-serif; }
+            }
+            .figure-caption {
+              font-size: 0.85em;
+              color: #555;
+              line-height: 1.45;
+              margin-top: 0.5em;
+              margin-bottom: 1.5em;
+            }
+            /* Center static images; keep widgets full-width */
+            .cell-output-display > p,
+            .cell-output-display > img {
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+              text-align: center;
+            }
+            /* Spacing: paragraphs, headings, figures */
+            main p { margin-bottom: 1.2em; }
+            main h2 { margin-top: 2.5em; margin-bottom: 1em; }
+            main h3 { margin-top: 2em; margin-bottom: 0.8em; }
+            .cell { margin-top: 1.5em; margin-bottom: 1.5em; }
+            /* Instant CSS tooltips for citation links */
+            .cite-tip { position: relative; }
+            .cite-tip:hover::after {
+              content: attr(data-tooltip);
+              position: absolute;
+              bottom: calc(100% + 4px);
+              left: 50%;
+              transform: translateX(-50%);
+              background: white;
+              border: 1px solid #ccc;
+              border-radius: 6px;
+              padding: 6px 10px;
+              font-size: 0.8em;
+              line-height: 1.4;
+              white-space: normal;
+              width: max-content;
+              max-width: 350px;
+              box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+              z-index: 1000;
+              pointer-events: none;
+            }
+          </style>
+execute:
+  warning: false
+knitr:
+  opts_chunk:
+    fig.align: "center"
+    warning: false
+    message: true
+    collapse: true
+    echo: false
+    dev: ragg_png
+    dpi: 300

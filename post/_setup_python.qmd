@@ -1,0 +1,172 @@
+```{python}
+#| label: python-setup
+#| cache: false
+
+
+import os
+import hashlib
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from io import BytesIO
+from PIL import Image
+from rdkit import Chem
+from rdkit.Chem.Draw import rdMolDraw2D
+from bokeh.plotting import figure as bokeh_figure, show
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.embed import components
+from bokeh.resources import CDN
+from IPython.display import HTML
+
+repo_root = Path(os.environ["REPO_ROOT"])
+
+# Write tooltip images as external assets instead of inlining as base64
+TOOLTIP_ASSETS = repo_root / "_site" / "assets" / "tooltips"
+TOOLTIP_ASSETS.mkdir(parents=True, exist_ok=True)
+TOOLTIP_REL = "assets/tooltips"
+
+
+def _save_tooltip(data: bytes, filename: str) -> str:
+    (TOOLTIP_ASSETS / filename).write_bytes(data)
+    return f"{TOOLTIP_REL}/{filename}"
+
+
+def smiles_to_svg(smiles, size=(300, 300)):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return ""
+    drawer = rdMolDraw2D.MolDraw2DSVG(size[0], size[1])
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg_str = drawer.GetDrawingText()
+    slug = hashlib.md5(smiles.encode()).hexdigest()[:12]
+    return _save_tooltip(svg_str.encode("utf-8"), f"mol_{slug}.svg")
+
+
+def save_tooltip_svg(svg_str, name):
+    if not svg_str:
+        return ""
+    return _save_tooltip(svg_str.encode("utf-8"), f"{name}.svg")
+
+
+def _fmt_area(v):
+    """Compact number format for peak-area tick labels."""
+    if v == 0:
+        return "0"
+    if v >= 1e6:
+        return f"{v / 1e6:.0f}M" if v % 1e6 == 0 else f"{v / 1e6:.1f}M"
+    if v >= 1e3:
+        return f"{v / 1e3:.0f}k" if v % 1e3 == 0 else f"{v / 1e3:.1f}k"
+    return f"{v:.0f}"
+
+
+def _nice_ticks(y_max, n=3):
+    """Return n nice round tick values from 0 to <= y_max."""
+    if y_max <= 0:
+        return [0]
+    raw_step = y_max / (n - 1)
+    mag = 10 ** np.floor(np.log10(raw_step))
+    for mult in [1, 2, 2.5, 5, 10]:
+        step = mult * mag
+        if step >= raw_step:
+            break
+    ticks = np.arange(0, y_max + step * 0.01, step)
+    return ticks[ticks <= y_max * 1.01]
+
+
+def make_swarm_svg(batch, peak_areas_df, enzymes=None, width=None, height=130):
+    """Inline SVG swarmplot: control vs treatment raw areas."""
+    sub = peak_areas_df[peak_areas_df["ocnt_batch"] == batch]
+    if sub.empty:
+        return ""
+
+    if enzymes is None:
+        enzymes = ["CYP3A4", "CYP2J2"]
+    if width is None:
+        width = 160 * len(enzymes)
+    cond_colors = {"control": "#4477AA", "treatment": "#EE6677"}
+    panel_w = width // len(enzymes)
+    margin_t, margin_b, margin_l, margin_r = 18, 22, 30, 5
+    plot_h = height - margin_t - margin_b
+
+    all_areas = sub["area"].values
+    y_max = all_areas.max() * 1.15 if len(all_areas) > 0 and all_areas.max() > 0 else 1
+
+    def sy(v):
+        return margin_t + plot_h * (1 - v / y_max)
+
+    ticks = _nice_ticks(y_max)
+
+    parts = [
+        f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg"'
+        f' style="background:#fafafa; border:1px solid #e0e0e0; border-radius:4px;">'
+    ]
+
+    for ei, enz in enumerate(enzymes):
+        ox = ei * panel_w
+        enz_data = sub[sub["enzyme"] == enz]
+        ctrl = enz_data[enz_data["condition"] == "control"]["area"].values
+        trt = enz_data[enz_data["condition"] == "treatment"]["area"].values
+
+        plot_cx = ox + margin_l + (panel_w - margin_l - margin_r) / 2
+        parts.append(
+            f'<text x="{plot_cx}" y="{margin_t - 5}" text-anchor="middle"'
+            f' font-size="9" font-family="Arial, sans-serif" font-weight="bold">{enz}</text>'
+        )
+
+        dot_area_w = panel_w - margin_l - margin_r
+        ctrl_x = ox + margin_l + dot_area_w * 0.33
+        trt_x = ox + margin_l + dot_area_w * 0.67
+
+        parts.append(
+            f'<line x1="{ox + margin_l}" y1="{margin_t}"'
+            f' x2="{ox + margin_l}" y2="{sy(0):.1f}"'
+            f' stroke="#ccc" stroke-width="0.5"/>'
+        )
+
+        for tv in ticks:
+            ty = sy(tv)
+            parts.append(
+                f'<line x1="{ox + margin_l - 3}" y1="{ty:.1f}"'
+                f' x2="{ox + margin_l}" y2="{ty:.1f}"'
+                f' stroke="#999" stroke-width="0.5"/>'
+            )
+            parts.append(
+                f'<text x="{ox + margin_l - 5}" y="{ty + 3:.1f}" text-anchor="end"'
+                f' font-size="7" font-family="Arial, sans-serif" fill="#666">{_fmt_area(tv)}</text>'
+            )
+
+        parts.append(
+            f'<line x1="{ox + margin_l}" y1="{sy(0):.1f}"'
+            f' x2="{ox + panel_w - margin_r}" y2="{sy(0):.1f}"'
+            f' stroke="#ccc" stroke-width="0.5"/>'
+        )
+
+        for cond, cx, vals in [("control", ctrl_x, ctrl), ("treatment", trt_x, trt)]:
+            for ji, v in enumerate(vals):
+                jitter = (ji - (len(vals) - 1) / 2) * 5
+                parts.append(
+                    f'<circle cx="{cx + jitter:.1f}" cy="{sy(v):.1f}" r="3.5"'
+                    f' fill="{cond_colors[cond]}" opacity="0.75"'
+                    f' stroke="white" stroke-width="0.5"/>'
+                )
+
+        parts.append(
+            f'<text x="{ctrl_x}" y="{height - 5}" text-anchor="middle"'
+            f' font-size="8" font-family="Arial, sans-serif" fill="{cond_colors["control"]}">control</text>'
+        )
+        parts.append(
+            f'<text x="{trt_x}" y="{height - 5}" text-anchor="middle"'
+            f' font-size="8" font-family="Arial, sans-serif" fill="{cond_colors["treatment"]}">treatment</text>'
+        )
+
+    mid_y = margin_t + plot_h / 2
+    parts.append(
+        f'<text x="6" y="{mid_y}" text-anchor="middle"'
+        f' font-size="8" font-family="Arial, sans-serif" fill="#666"'
+        f' transform="rotate(-90,6,{mid_y})">peak area</text>'
+    )
+
+    parts.append("</svg>")
+    return "".join(parts)
+```

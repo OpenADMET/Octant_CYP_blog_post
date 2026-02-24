@@ -1,0 +1,33 @@
+[project]
+name = "octant-cyp-blog-post"
+version = "0.1.0"
+description = "CYP clearance assay blog post - interactive figures and analysis"
+requires-python = ">=3.13,<3.14"
+
+dependencies = [
+    # R console (reticulate bridge)
+    "radian",
+    "ipython",
+
+    # Data
+    "numpy>=1.20.0",
+    "pandas",
+
+    # Chemistry (molecule structure visualization)
+    "rdkit",
+
+    # Interactive figures
+    "bokeh",
+
+    # Statistics
+    "scipy",
+
+    # Image processing (SVG→raster for compact tooltips)
+    "Pillow",
+    "cairosvg",
+    # Database access
+    "databricks-sql-connector",
+
+    # Argo LIMS API
+    "requests",
+]
