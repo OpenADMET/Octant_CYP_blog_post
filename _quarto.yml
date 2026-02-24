@@ -40,6 +40,8 @@ format:
             main h2 { margin-top: 2.5em; margin-bottom: 1em; }
             main h3 { margin-top: 2em; margin-bottom: 0.8em; }
             .cell { margin-top: 1.5em; margin-bottom: 1.5em; }
+            /* Fix ggiraph fullscreen: height:90vw is a bug (should be width) */
+            .ggiraph-fullscreen-content { height: auto; width: 90vw; }
             /* Instant CSS tooltips for citation links */
             .cite-tip { position: relative; }
             .cite-tip:hover::after {
