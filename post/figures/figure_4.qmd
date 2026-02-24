@@ -1,0 +1,182 @@
+```{r}
+#| label: figure-4
+#| fig-width: 4
+#| fig-height: 4
+#| out-width: "70%"
+#| cache: true
+#| message: false
+
+theme_set(theme_pub(base_size = 8))
+
+# --- data loading ---
+rwt115_data <- readRDS(here("data", "rds", "RWT115_anno_data_df.RDS"))
+rwt92_norm_df <- readRDS(here("data", "rds", "RWT92_norm_data.RDS"))
+
+rwt112_data <- readRDS(here("data", "rds", "RWT112_anno_data_df.RDS")) |>
+  filter(Plate == "Plate4") |>
+  filter(dilution == 1) |>
+  filter(CYP_conc == "10nM") |>
+  filter(assay_buffer %in% c("100 mM KPO4", "10 mM KPO4 + 10 mM MgCl2")) |>
+  filter(component_lab == "fragments summed") |>
+  filter(drug_M == 5e-6) |>
+  mutate(
+    Sample = case_when(
+      assay_buffer == "100 mM KPO4" ~ "Std CYP reaction",
+      assay_buffer == "10 mM KPO4 + 10 mM MgCl2" ~ "Optimized CYP matrix"
+    )
+  ) |>
+  mutate(
+    common_name = case_when(
+      common_name == "testosterone" ~ "Testosterone",
+      common_name == "midazolam" ~ "Midazolam",
+      .default = common_name
+    )
+  ) |>
+  select(Sample, common_name, drug_M, peak_area)
+
+# --- panel A: evaporation ---
+fig_4a <- rwt115_data |>
+  filter(total_volume == 6.5) |>
+  ggplot(aes(x = time_min, y = percent_volume, fill = DMSO_percent)) +
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    mapping = aes(color = DMSO_percent, group = DMSO_percent),
+    shape = 21,
+    size = 1,
+    stroke = 0.3,
+    show.legend = TRUE
+  ) +
+  stat_summary(
+    fun = mean,
+    geom = "line",
+    mapping = aes(color = DMSO_percent, group = DMSO_percent),
+    linewidth = 0.8
+  ) +
+  geom_hline(yintercept = 1, color = "black", linetype = "dashed") +
+  scale_y_continuous(
+    labels = scales::label_percent(),
+    breaks = c(.5, .6, 0.7, 0.8, 0.9, 1)
+  ) +
+  labs(
+    x = "Time sitting in Echo-MS (hours)",
+    y = "Well volume"
+  ) +
+  scico::scale_fill_scico(
+    "DMSO (%)",
+    breaks = seq(0, 70, 10),
+    limits = c(0, 70),
+    palette = "lipari",
+    aesthetics = c("fill", "color")
+  ) +
+  scale_x_continuous(breaks = scales::breaks_width(60), labels = \(x) x / 60) +
+  theme(
+    legend.key.height = grid::unit(1, "null"),
+    legend.title = element_text(size = rel(0.75), margin = margin(b = 8)),
+    legend.text = element_text(size = rel(0.65)),
+    axis.title = element_text(size = rel(0.75)),
+    axis.text.x = element_text(size = rel(0.75), hjust = 0.5, angle = 0),
+    axis.text.y = element_text(size = rel(0.75), angle = 0),
+    legend.frame = element_rect(colour = "black", linewidth = 0.5),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
+  )
+
+# --- panel B top: phosphate activity ---
+fig_4b <- rwt92_norm_df |>
+  filter(!empty_wells) |>
+  filter(matrix == "no matrix added") |>
+  mutate(
+    condition = case_when(
+      condition == "Control baculosome (-CYP3A4) (no matrix)" ~ "-CYP3A4",
+      .default = condition
+    )
+  ) |>
+  filter(!(baculosome == "control (-CYP3A4)" & MgCl2_mM == 10)) |>
+  mutate(
+    condition = case_when(
+      MgCl2_mM != 0 ~ paste0(condition, " + 10 mM MgCl2"),
+      .default = condition
+    )
+  ) |>
+  ggplot(aes(
+    x = `buffer ionic strength (M)`,
+    y = fc,
+    group = condition,
+    color = condition
+  )) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey") +
+  geom_beeswarm(
+    aes(fill = condition),
+    size = 1.5,
+    shape = 21,
+    color = "white",
+    show.legend = TRUE
+  ) +
+  geom_smooth(
+    method = "loess",
+    formula = y ~ x,
+    linewidth = 0.5,
+    show.legend = FALSE,
+    se = FALSE
+  ) +
+  scale_color_manual("", values = c("grey", cbpalette)) +
+  scale_fill_manual("", values = c("grey", cbpalette)) +
+  labs(
+    y = "CYP3A4 activity",
+    x = expression("KPO"[4] ~ "buffer (mM)")
+  ) +
+  scale_y_continuous(breaks = scales::breaks_width(width = 10)) +
+  scale_x_continuous(
+    breaks = seq(0.01, 0.1, by = 0.03),
+    labels = \(x) 1e3 * x
+  ) +
+  theme(
+    legend.key = element_blank(),
+    legend.position = c(0.02, 0.2),
+    legend.justification = c(0, 0.5),
+    legend.background = element_blank(),
+    legend.text = element_text(size = rel(0.55)),
+    axis.title = element_text(size = rel(0.75)),
+    axis.text.x = element_text(size = rel(0.75), angle = 0, hjust = 0.5),
+    axis.text.y = element_text(size = rel(0.75)),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) +
+  guides(
+    color = guide_legend(ncol = 1, override.aes = list(size = 2)),
+    fill = NULL
+  )
+
+# --- panel B bottom: signal improvement ---
+fold_change_labels <- rwt112_data |>
+  group_by(common_name) |>
+  summarise(
+    std_mean = mean(peak_area[Sample == "Std CYP reaction"]),
+    opt_mean = mean(peak_area[Sample == "Optimized CYP matrix"]),
+    fold_change = signif(opt_mean / std_mean, 2),
+    peak_area = max(opt_mean, std_mean) * 2,
+    Sample = "Optimized CYP matrix",
+    .groups = "drop"
+  )
+
+# --- panel C: platemap image ---
+fig_4c <- wrap_elements(
+  grid::rasterGrob(
+    png::readPNG(here("post", "figures", "assets", "figure_4C.png")),
+    interpolate = TRUE
+  )
+) +
+  theme(plot.margin = margin(t = -30))
+
+# --- assemble figure ---
+fig_4 <- (free(fig_4a, type = "label") + fig_4b) /
+  fig_4c +
+  plot_layout(heights = c(1, 1.4))
+
+fig_4 +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(size = 10, face = "bold"))
+```

@@ -1,0 +1,184 @@
+```{python}
+#| label: figure-3-data
+#| cache: false
+
+from bokeh.layouts import gridplot
+from bokeh.models import CustomJSTickFormatter
+from scipy.stats import gaussian_kde
+from concurrent.futures import ThreadPoolExecutor
+
+# --- load IC50 data (copied by scripts/prepare_data.py) ---
+
+ic50 = pd.read_csv(repo_root / "data/inhibition.tsv", sep="\t")
+ic50_avg = ic50.groupby("ocnt_batch").agg(
+    CYP3A4_pIC50=("CYP3A4_pIC50", "mean"),
+    standardized_smiles=("standardized_smiles", "first"),
+).reset_index()
+
+# --- load reactivity data & compute CYP3A4 % remaining ---
+
+peak_areas_b = pd.read_csv(repo_root / "data/reactivity.tsv", sep="\t")
+
+react_b = (
+    peak_areas_b[peak_areas_b["enzyme"] == "CYP3A4"]
+    .groupby(["ocnt_batch", "condition"])["area"]
+    .mean()
+    .reset_index()
+    .pivot_table(index="ocnt_batch", columns="condition", values="area")
+    .reset_index()
+)
+react_b["pct_remaining"] = (react_b["treatment"] / react_b["control"]) * 100
+
+# --- join IC50 + reactivity ---
+
+panel_b = ic50_avg.merge(
+    react_b[["ocnt_batch", "pct_remaining"]],
+    on="ocnt_batch",
+    how="inner",
+).dropna(subset=["pct_remaining"])
+
+# flag inactive compounds (no fitted IC50) and assign sentinel
+panel_b["inactive"] = panel_b["CYP3A4_pIC50"].isna()
+panel_b["CYP3A4_pIC50"] = panel_b["CYP3A4_pIC50"].fillna(1)
+
+# convert pIC50 to IC50 (molar)
+panel_b["IC50_M"] = 10 ** (-panel_b["CYP3A4_pIC50"])
+
+# tooltip label
+panel_b["pic50_label"] = panel_b["CYP3A4_pIC50"].apply(lambda v: f"{v:.1f}")
+panel_b.loc[panel_b["inactive"], "pic50_label"] = "Inactive"
+
+# --- molecule images ---
+
+panel_b["mol_img"] = panel_b["standardized_smiles"].apply(smiles_to_svg)
+
+# --- DRC plot thumbnails as base64 (parallelized) ---
+
+def make_drc_thumb(batch_id, width=300):
+    path = repo_root / f"data/inhibition_drc-plots/{batch_id}_c7111_no-ctrls.png"
+    if not path.exists():
+        return ""
+    img = Image.open(path)
+    ratio = width / img.width
+    img = img.resize((width, int(img.height * ratio)), Image.LANCZOS)
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=90)
+    return _save_tooltip(buf.getvalue(), f"drc_{batch_id}.webp")
+
+with ThreadPoolExecutor() as pool:
+    panel_b["drc_img"] = list(pool.map(make_drc_thumb, panel_b["ocnt_batch"]))
+
+# --- swarm images ---
+
+panel_b["swarm_img"] = panel_b["ocnt_batch"].map(
+    lambda b: save_tooltip_svg(make_swarm_svg(b, peak_areas_b, enzymes=["CYP3A4"]), name=f"swarm_3a4_{b}")
+)
+```
+
+```{python}
+#| label: figure-3-plot
+#| cache: false
+
+def make_panel_b(panel_b):
+    x = panel_b["IC50_M"].values
+    y = panel_b["pct_remaining"].values
+
+    source_b = ColumnDataSource(data={
+        "x": x,
+        "y": y,
+        "mol_img": panel_b["mol_img"],
+        "swarm_img": panel_b["swarm_img"],
+        "drc_img": panel_b["drc_img"],
+        "batch": panel_b["ocnt_batch"],
+        "pic50": panel_b["CYP3A4_pIC50"],
+        "pic50_label": panel_b["pic50_label"],
+    })
+
+    TOOLTIPS_B = """
+    <div style="width:580px;">
+        <div style="text-align:center;"><b>@batch</b> &mdash; pIC50: @pic50_label</div>
+        <div style="display:flex; align-items:start; gap:6px;">
+            <div><img src="@swarm_img{safe}" height="130"></div>
+            <div><img src="@mol_img{safe}" width="150"></div>
+            <div><img src="@drc_img{safe}" width="200"></div>
+        </div>
+    </div>
+    """
+
+    lo_y = min(y.min(), 0) - 5
+    hi_y = max(y.max(), 105) + 5
+
+    si_formatter = CustomJSTickFormatter(code="""
+        const v = tick;
+        if (v >= 1)       return v.toFixed(0) + ' M';
+        if (v > 0.05)     return 'Inactive';
+        if (v >= 1e-3)    return (v * 1e3).toFixed(0) + ' mM';
+        if (v >= 1e-6)    return (v * 1e6).toFixed(0) + ' µM';
+        if (v >= 1e-9)    return (v * 1e9).toFixed(0) + ' nM';
+        if (v >= 1e-12)   return (v * 1e12).toFixed(0) + ' pM';
+        return v.toExponential(1) + ' M';
+    """)
+
+    # main scatter
+    p = bokeh_figure(
+        width=500, height=500,
+        x_axis_label="CYP3A4 IC50",
+        y_axis_label="CYP3A4 (% remaining)",
+        x_axis_type="log",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        y_range=(lo_y, hi_y),
+    )
+    p.xaxis.formatter = si_formatter
+    p.xaxis.axis_label_text_font_style = "normal"
+    p.yaxis.axis_label_text_font_style = "normal"
+    p.scatter("x", "y", source=source_b, size=6,
+              fill_alpha=0.35, line_color="white", line_width=0.5)
+    p.xaxis.minor_tick_line_color = None
+    p.add_tools(HoverTool(tooltips=TOOLTIPS_B))
+
+    # marginal density: top (IC50, log-space)
+    log_x = np.log10(x)
+    x_kde = gaussian_kde(log_x)
+    log_grid = np.linspace(log_x.min() - 0.3, log_x.max() + 0.3, 300)
+    x_grid = 10 ** log_grid
+    x_dens = x_kde(log_grid)
+
+    ph = bokeh_figure(
+        width=p.width, height=120, x_range=p.x_range,
+        x_axis_type="log",
+        title="CYP3A4 Inhibition vs Reactivity",
+        tools="", toolbar_location=None,
+    )
+    ph.line(x_grid, x_dens, line_color="steelblue", line_width=1.5)
+    ph.varea(x=x_grid, y1=0, y2=x_dens, fill_color="steelblue", fill_alpha=0.15)
+    ph.xaxis.visible = False
+    ph.yaxis.visible = False
+    ph.outline_line_color = None
+    ph.grid.visible = False
+    ph.min_border_bottom = 0
+    ph.min_border_left = p.min_border_left
+
+    # marginal density: right (% remaining)
+    y_kde = gaussian_kde(y)
+    y_grid = np.linspace(lo_y, hi_y, 300)
+    y_dens = y_kde(y_grid)
+
+    pv = bokeh_figure(
+        width=120, height=p.height, y_range=p.y_range,
+        tools="", toolbar_location=None,
+    )
+    pv.line(y_dens, y_grid, line_color="steelblue", line_width=1.5)
+    pv.harea(y=y_grid, x1=0, x2=y_dens, fill_color="steelblue", fill_alpha=0.15)
+    pv.xaxis.visible = False
+    pv.yaxis.visible = False
+    pv.outline_line_color = None
+    pv.grid.visible = False
+    pv.min_border_bottom = p.min_border_bottom
+    pv.min_border_left = 0
+
+    layout_b = gridplot([[ph, None], [p, pv]], merge_tools=False)
+    script, div = components(layout_b)
+    return HTML(CDN.render() + div + script)
+
+make_panel_b(panel_b)
+```

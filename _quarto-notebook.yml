@@ -1,0 +1,9 @@
+project:
+  output-dir: _site/notebook
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-location: left
+execute:
+  echo: true

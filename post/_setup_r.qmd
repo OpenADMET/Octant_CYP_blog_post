@@ -1,0 +1,57 @@
+```{r}
+#| label: setup-variables
+#| cache: false
+#| message: false
+
+here::i_am("cyp-blog-post.qmd")
+wd <- here::here()
+Sys.setenv(REPO_ROOT = here::here())
+```
+
+```{r}
+#| label: env-setup
+#| eval: false
+
+# initialize renv, select option 3 to activate the project without snapshotting or installing any packages
+renv::init(
+  project = wd
+)
+
+depends <- c(
+  "ggbeeswarm",
+  "ggh4x",
+  "ggiraph",
+  "ggthemes",
+  "here",
+  "hexbin",
+  "paletteer",
+  "patchwork",
+  "png",
+  "scico",
+  "tidyverse"
+)
+
+renv::install(depends, prompt = FALSE, dependencies = TRUE, project = wd)
+
+# snapshot dependencies
+renv::snapshot(prompt = FALSE, project = wd)
+```
+
+```{r}
+#| label: attach-packages
+#| cache: false
+#| message: false
+
+renv::load(project = wd)
+
+library(tidyverse)
+library(ggplot2)
+library(ggbeeswarm)
+library(ggh4x)
+library(ggiraph)
+library(patchwork)
+library(here)
+
+source(here("R", "helpers.R"))
+theme_set(theme_pub(base_size = 12))
+```
