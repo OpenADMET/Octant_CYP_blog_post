@@ -1,7 +1,7 @@
 ---
 title: "Building the OpenADMET Data Engine"
 author: "Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi Handly, Sri Kosuri"
-date: today
+date: 2026-03-02
 format:
   html:
     output-file: index.html
