@@ -23,7 +23,6 @@ summary = (
     .reset_index()
 )
 
-summary["log2fc"] = np.log2((summary["treatment"] + 1) / (summary["control"] + 1))
 summary["pct_remaining"] = (summary["treatment"] / summary["control"]) * 100
 
 # --- pivot for each metric ---
@@ -36,26 +35,21 @@ def pivot_metric(metric):
         .dropna()
     )
 
-react_log2 = pivot_metric("log2fc")
 react_pct = pivot_metric("pct_remaining")
 
 # join SMILES
-react_log2 = react_log2.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["standardized_smiles"])
 react_pct = react_pct.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["standardized_smiles"])
 
 # --- render molecule images ---
 
-react_log2["mol_img"] = react_log2["standardized_smiles"].apply(smiles_to_webp)
 react_pct["mol_img"] = react_pct["standardized_smiles"].apply(smiles_to_webp)
 
 # --- swarmplot images for tooltips ---
 
-# build a lookup once, then map into each dataframe
 _swarm_cache = {}
-for batch in set(react_log2["ocnt_batch"]) | set(react_pct["ocnt_batch"]):
+for batch in set(react_pct["ocnt_batch"]):
     _swarm_cache[batch] = svg_to_webp_b64(make_swarm_svg(batch, peak_areas))
 
-react_log2["swarm_img"] = react_log2["ocnt_batch"].map(_swarm_cache)
 react_pct["swarm_img"] = react_pct["ocnt_batch"].map(_swarm_cache)
 
 # --- helper: scatter + marginal densities ---
@@ -135,23 +129,6 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel, title):
     script, div = components(layout)
     return HTML(CDN.render() + div + script)
 ```
-
-###  (option 1): log2 fold change
-
-```{python}
-#| label: figure-2-log2fc
-#| cache: false
-
-
-marginal_scatter(
-    react_log2, "CYP3A4", "CYP2J2",
-    xlabel="CYP3A4 log\u2082(treatment / control)",
-    ylabel="CYP2J2 log\u2082(treatment / control)",
-    title="CYP3A4 vs CYP2J2 \u2014 log\u2082 fold change",
-)
-```
-
-### (option 2): % remaining
 
 ```{python}
 #| label: figure-2-pct
