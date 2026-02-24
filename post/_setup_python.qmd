@@ -4,44 +4,49 @@
 
 
 import os
-import base64
+import hashlib
 import numpy as np
 import pandas as pd
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
 from rdkit import Chem
-from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from bokeh.plotting import figure as bokeh_figure, show
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.embed import components
 from bokeh.resources import CDN
 from IPython.display import HTML
-import cairosvg
 
 repo_root = Path(os.environ["REPO_ROOT"])
 
+# Write tooltip images as external assets instead of inlining as base64
+TOOLTIP_ASSETS = repo_root / "_site" / "assets" / "tooltips"
+TOOLTIP_ASSETS.mkdir(parents=True, exist_ok=True)
+TOOLTIP_REL = "assets/tooltips"
 
-def smiles_to_webp(smiles, size=(300, 300), quality=90):
+
+def _save_tooltip(data: bytes, filename: str) -> str:
+    (TOOLTIP_ASSETS / filename).write_bytes(data)
+    return f"{TOOLTIP_REL}/{filename}"
+
+
+def smiles_to_svg(smiles, size=(300, 300)):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return ""
-    img = Draw.MolToImage(mol, size=size)
-    buf = BytesIO()
-    img.save(buf, format="WEBP", quality=quality)
-    b64 = base64.b64encode(buf.getvalue()).decode()
-    return f"data:image/webp;base64,{b64}"
+    drawer = rdMolDraw2D.MolDraw2DSVG(size[0], size[1])
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg_str = drawer.GetDrawingText()
+    slug = hashlib.md5(smiles.encode()).hexdigest()[:12]
+    return _save_tooltip(svg_str.encode("utf-8"), f"mol_{slug}.svg")
 
 
-def svg_to_webp_b64(svg_str, quality=90):
+def save_tooltip_svg(svg_str, name):
     if not svg_str:
         return ""
-    png_bytes = cairosvg.svg2png(bytestring=svg_str.encode("utf-8"), scale=2)
-    img = Image.open(BytesIO(png_bytes))
-    buf = BytesIO()
-    img.save(buf, format="WEBP", quality=quality)
-    b64 = base64.b64encode(buf.getvalue()).decode()
-    return f"data:image/webp;base64,{b64}"
+    return _save_tooltip(svg_str.encode("utf-8"), f"{name}.svg")
 
 
 def _fmt_area(v):
@@ -148,11 +153,11 @@ def make_swarm_svg(batch, peak_areas_df, enzymes=None, width=None, height=130):
 
         parts.append(
             f'<text x="{ctrl_x}" y="{height - 5}" text-anchor="middle"'
-            f' font-size="8" font-family="Arial, sans-serif" fill="{cond_colors["control"]}">ctrl</text>'
+            f' font-size="8" font-family="Arial, sans-serif" fill="{cond_colors["control"]}">control</text>'
         )
         parts.append(
             f'<text x="{trt_x}" y="{height - 5}" text-anchor="middle"'
-            f' font-size="8" font-family="Arial, sans-serif" fill="{cond_colors["treatment"]}">trt</text>'
+            f' font-size="8" font-family="Arial, sans-serif" fill="{cond_colors["treatment"]}">treatment</text>'
         )
 
     mid_y = margin_t + plot_h / 2

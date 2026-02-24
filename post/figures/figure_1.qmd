@@ -137,7 +137,7 @@ hex_theme <- theme(
   legend.title = element_text(angle = 90),
   legend.key.width = unit(0.5, "lines"),
   legend.frame = element_rect(color = "black", linewidth = 0.5),
-  legend.text = element_text(margin = margin(l = -1.5)),
+  legend.text = element_text(margin = margin(l = 4)),
   axis.text.x = element_text(angle = 0, hjust = 0.5)
 )
 
@@ -184,8 +184,8 @@ panel_d <- react_summary |>
     limits = c(NA, 6)
   ) +
   labs(
-    x = expression(atop("Control", Log[10](peak ~ area + 1))),
-    y = expression(atop("Treatment", Log[10](peak ~ area + 1))),
+    x = expression(Control ~ log[10](peak ~ area + 1)),
+    y = expression(Treatment ~ log[10](peak ~ area + 1)),
     fill = "# cpds"
   ) +
   hex_theme +
@@ -234,8 +234,8 @@ panel_b <- react_summary |>
     limits = c(NA, 6)
   ) +
   labs(
-    x = expression(atop("Control", Log[10](peak ~ area + 1))),
-    y = expression(atop("Treatment", Log[10](peak ~ area + 1))),
+    x = expression(Control ~ log[10](peak ~ area + 1)),
+    y = expression(Treatment ~ log[10](peak ~ area + 1)),
     fill = "n"
   ) +
   hex_theme +
@@ -375,11 +375,15 @@ panel_f <- ggplot() +
   )
 
 # --- assemble figure ---
-fig1 <- (panel_a | panel_c | panel_e) /
-  (panel_b | panel_d | panel_f) +
-  plot_layout(heights = c(1, 1))
-
-fig1 +
+wrap_plots(
+  panel_a,
+  panel_c,
+  panel_e,
+  panel_b,
+  panel_d,
+  panel_f,
+  ncol = 3
+) +
   plot_annotation(tag_levels = list(c("A", "C", "E", "B", "D", "F"))) &
   theme(plot.tag = element_text(size = 16, face = "bold"))
 ```

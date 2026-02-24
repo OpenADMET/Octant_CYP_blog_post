@@ -42,13 +42,13 @@ react_pct = react_pct.merge(cpds, on="ocnt_batch", how="left").dropna(subset=["s
 
 # --- render molecule images ---
 
-react_pct["mol_img"] = react_pct["standardized_smiles"].apply(smiles_to_webp)
+react_pct["mol_img"] = react_pct["standardized_smiles"].apply(smiles_to_svg)
 
 # --- swarmplot images for tooltips ---
 
 _swarm_cache = {}
 for batch in set(react_pct["ocnt_batch"]):
-    _swarm_cache[batch] = svg_to_webp_b64(make_swarm_svg(batch, peak_areas))
+    _swarm_cache[batch] = save_tooltip_svg(make_swarm_svg(batch, peak_areas), name=f"swarm_{batch}")
 
 react_pct["swarm_img"] = react_pct["ocnt_batch"].map(_swarm_cache)
 

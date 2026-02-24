@@ -295,15 +295,17 @@ make_drc_plot <- function(drug_name) {
     )
 }
 
-# Render each drug's DRC plot to a base64 PNG string
-drc_b64 <- setNames(
+# Render each drug's DRC plot to an external PNG asset
+tooltip_dir <- file.path(here(), "_site", "assets", "tooltips")
+dir.create(tooltip_dir, recursive = TRUE, showWarnings = FALSE)
+
+drc_paths <- setNames(
   vapply(drug_list, function(d) {
     p <- make_drc_plot(d)
-    tmp <- tempfile(fileext = ".png")
-    ggsave(tmp, p, width = 3.5, height = 2.5, dpi = 150, bg = "white")
-    b64 <- base64enc::base64encode(tmp)
-    unlink(tmp)
-    paste0("data:image/png;base64,", b64)
+    fname <- paste0("tdi_drc_", gsub("[^a-zA-Z0-9]", "_", d), ".png")
+    ggsave(file.path(tooltip_dir, fname), p,
+           width = 3.5, height = 2.5, dpi = 150, bg = "white")
+    paste0("assets/tooltips/", fname)
   }, character(1)),
   drug_list
 )
@@ -329,7 +331,7 @@ panel_c_df <- panel_c_df |>
   rowwise() |>
   mutate(
     tooltip_html = {
-      img_src <- drc_b64[as.character(drug)]
+      img_src <- drc_paths[as.character(drug)]
       paste0(
         '<div style="text-align:center;padding:4px;">',
         '<b style="font-size:13px;">', drug, '</b><br>',

@@ -50,11 +50,11 @@ panel_b.loc[panel_b["inactive"], "pic50_label"] = "Inactive"
 
 # --- molecule images ---
 
-panel_b["mol_img"] = panel_b["standardized_smiles"].apply(smiles_to_webp)
+panel_b["mol_img"] = panel_b["standardized_smiles"].apply(smiles_to_svg)
 
 # --- DRC plot thumbnails as base64 (parallelized) ---
 
-def png_to_base64_thumb(batch_id, width=300):
+def make_drc_thumb(batch_id, width=300):
     path = repo_root / f"data/inhibition_drc-plots/{batch_id}_c7111_no-ctrls.png"
     if not path.exists():
         return ""
@@ -63,16 +63,15 @@ def png_to_base64_thumb(batch_id, width=300):
     img = img.resize((width, int(img.height * ratio)), Image.LANCZOS)
     buf = BytesIO()
     img.save(buf, format="WEBP", quality=90)
-    b64 = base64.b64encode(buf.getvalue()).decode()
-    return f"data:image/webp;base64,{b64}"
+    return _save_tooltip(buf.getvalue(), f"drc_{batch_id}.webp")
 
 with ThreadPoolExecutor() as pool:
-    panel_b["drc_img"] = list(pool.map(png_to_base64_thumb, panel_b["ocnt_batch"]))
+    panel_b["drc_img"] = list(pool.map(make_drc_thumb, panel_b["ocnt_batch"]))
 
 # --- swarm images ---
 
 panel_b["swarm_img"] = panel_b["ocnt_batch"].map(
-    lambda b: svg_to_webp_b64(make_swarm_svg(b, peak_areas_b, enzymes=["CYP3A4"]))
+    lambda b: save_tooltip_svg(make_swarm_svg(b, peak_areas_b, enzymes=["CYP3A4"]), name=f"swarm_3a4_{b}")
 )
 ```
 
