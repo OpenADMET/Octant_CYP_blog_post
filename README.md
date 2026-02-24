@@ -40,7 +40,7 @@ quarto render --profile notebook
 
 Output: `_site/notebook/index.html`
 
-To preview either version locally without Quarto, serve the `_site/` directory:
+To preview the blog version without quarto, serve the `_site/` directory:
 
 ```bash
 cd _site && python -m http.server 8000
@@ -57,15 +57,15 @@ Experimental protocols used to generate the datasets in this blog post:
 
 All data is in `data/`:
 
-| File | Description | Rows |
-| --- | --- | --- |
-| `reactivity.tsv` | Raw Echo-MS peak areas for CYP3A4 and CYP2J2 reactivity screening (control vs treatment, per compound/replicate) | 19,344 |
-| `inhibition.tsv` | CYP3A4 pIC50 values, QC flags, and SMILES for inhibition screening | 1,340 |
-| `inhibition_wells.tsv` | Well-level fluorescence data for CYP3A4 inhibition DRC fitting | 16,931 |
-| `willitfly.tsv` | Ionization comparison: 1 mM ammonium fluoride vs 5 mM ammonium formate buffers | 11,353 |
-| `clearance_snippet.tsv` | Example metabolic clearance time-course data | 292 |
-| `tdi_drc_curves.tsv` | Fitted dose-response curves for time-dependent inhibition (TDI) assay | 3,012 |
-| `tdi_drc_params.tsv` | Fitted DRC parameters (pIC50, Hill slope, CIs) for TDI compounds | 12 |
-| `tdi_drc_points.tsv` | Raw DRC measurement points for TDI compounds | 144 |
-| `tdi_pic50_shift.tsv` | pIC50 shift estimates (±preincubation) for TDI compounds | 6 |
-| `inhibition_drc-plots/` | Dose-response curve images (1,343 PNGs) used as tooltips in Figure 3 | — |
+| File                    | Description                                                                                                      | Rows   |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------ |
+| `reactivity.tsv`        | Raw Echo-MS peak areas for CYP3A4 and CYP2J2 reactivity screening (control vs treatment, per compound/replicate) | 19,344 |
+| `inhibition.tsv`        | CYP3A4 pIC50 values, QC flags, and SMILES for inhibition screening                                               | 1,340  |
+| `inhibition_wells.tsv`  | Well-level fluorescence data for CYP3A4 inhibition DRC fitting                                                   | 16,931 |
+| `willitfly.tsv`         | Ionization comparison: 1 mM ammonium fluoride vs 5 mM ammonium formate buffers                                   | 11,353 |
+| `clearance_snippet.tsv` | Example metabolic clearance time-course data                                                                     | 292    |
+| `tdi_drc_curves.tsv`    | Fitted dose-response curves for time-dependent inhibition (TDI) assay                                            | 3,012  |
+| `tdi_drc_params.tsv`    | Fitted DRC parameters (pIC50, Hill slope, CIs) for TDI compounds                                                 | 12     |
+| `tdi_drc_points.tsv`    | Raw DRC measurement points for TDI compounds                                                                     | 144    |
+| `tdi_pic50_shift.tsv`   | pIC50 shift estimates (±preincubation) for TDI compounds                                                         | 6      |
+| `inhibition_drc-plots/` | Dose-response curve images (1,343 PNGs) used as tooltips in Figure 3                                             | —      |
