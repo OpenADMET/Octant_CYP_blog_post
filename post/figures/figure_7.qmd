@@ -1,6 +1,7 @@
 ```{r}
 #| label: figure-7
 #| cache: false
+#| message: false
 
 theme_set(theme_pub(base_size = 12))
 

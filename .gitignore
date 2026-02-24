@@ -1,5 +1,7 @@
 # Quarto
 /.quarto/
+_freeze/
+*_files/
 **/*.quarto_ipynb
 *_cache/
 *.rmarkdown

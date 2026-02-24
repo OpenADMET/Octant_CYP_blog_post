@@ -25,10 +25,10 @@ uv sync
 ## Rendering
 
 ```bash
-quarto render cyp-blog-post.qmd
+quarto render --profile notebook
 ```
 
-Output is written to `_site/index.html`.
+Output: `_site/notebook/index.html`
 
 ## Protocols
 

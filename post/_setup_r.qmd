@@ -1,6 +1,7 @@
 ```{r}
 #| label: setup-variables
 #| cache: false
+#| message: false
 
 here::i_am("cyp-blog-post.qmd")
 wd <- here::here()
@@ -10,7 +11,6 @@ Sys.setenv(REPO_ROOT = here::here())
 ```{r}
 #| label: env-setup
 #| eval: false
-#| echo: true
 
 # initialize renv, select option 3 to activate the project without snapshotting or installing any packages
 renv::init(
@@ -40,7 +40,7 @@ renv::snapshot(prompt = FALSE, project = wd)
 ```{r}
 #| label: attach-packages
 #| cache: false
-#| message: true
+#| message: false
 
 renv::load(project = wd)
 

@@ -2,6 +2,7 @@
 #| label: figure-6
 #| fig-width: 5
 #| fig-height: 5
+#| out-width: "70%"
 #| message: false
 #| cache: true
 
@@ -70,6 +71,7 @@ hex_panel <- wif |>
   theme(
     legend.position = "left",
     legend.background = element_blank(),
+    axis.title.y = element_text(size = rel(0.8)),
     legend.title = element_text(angle = 90, hjust = 0.5)
   )
 
@@ -126,10 +128,16 @@ marginal_panel <- fold_change_bins |>
     x = NULL,
     y = "Median fold-increase\n(fluoride / formate)"
   ) +
+  coord_cartesian(clip = "off") +
   theme(
     panel.grid.major.y = element_blank(),
     panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 0, hjust = 0.5)
+    panel.border = element_blank(),
+    axis.line.x.bottom = element_line(),
+    axis.line.y.left = element_line(),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.title.y = element_text(size = rel(0.8)),
+    plot.margin = margin(t = 15, r = 5, b = 0, l = 5)
   )
 
 # --- assemble with patchwork ---

@@ -8,8 +8,39 @@ format:
     toc: true
     toc-location: left
     smooth-scroll: true
-    code-fold: true
     number-sections: false
+    lightbox: true
+    mainfont: "Inter, sans-serif"
+    include-in-header:
+      - text: |
+          <link rel="preconnect" href="https://rsms.me/">
+          <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+          <style>
+            :root { font-feature-settings: 'liga' 1, 'calt' 1; }
+            @supports (font-variation-settings: normal) {
+              :root { font-family: InterVariable, sans-serif; }
+            }
+            .figure-caption {
+              font-size: 0.85em;
+              color: #555;
+              line-height: 1.45;
+              margin-top: 0.5em;
+              margin-bottom: 1.5em;
+            }
+            /* Center static images; keep widgets full-width */
+            .cell-output-display > p,
+            .cell-output-display > img {
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+              text-align: center;
+            }
+            /* Spacing: paragraphs, headings, figures */
+            main p { margin-bottom: 1.2em; }
+            main h2 { margin-top: 2.5em; margin-bottom: 1em; }
+            main h3 { margin-top: 2em; margin-bottom: 0.8em; }
+            .cell { margin-top: 1.5em; margin-bottom: 1.5em; }
+          </style>
 execute:
   warning: false
 knitr:
@@ -18,4 +49,6 @@ knitr:
     warning: false
     message: true
     collapse: true
-    echo: true
+    echo: false
+    dev: ragg_png
+    dpi: 300

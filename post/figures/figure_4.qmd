@@ -1,9 +1,10 @@
 ```{r}
 #| label: figure-4
 #| fig-width: 4
-#| fig-height: 5.3
-#| fig-dpi: 600
+#| fig-height: 4
+#| out-width: "70%"
 #| cache: true
+#| message: false
 
 theme_set(theme_pub(base_size = 8))
 
@@ -124,7 +125,7 @@ fig_4b <- rwt92_norm_df |>
   scale_fill_manual("", values = c("grey", cbpalette)) +
   labs(
     y = "CYP3A4 activity",
-    x = "KPO4 buffer (mM)"
+    x = expression("KPO"[4] ~ "buffer (mM)")
   ) +
   scale_y_continuous(breaks = scales::breaks_width(width = 10)) +
   scale_x_continuous(
@@ -164,15 +165,11 @@ fold_change_labels <- rwt112_data |>
 # --- panel C: platemap image ---
 fig_4c <- wrap_elements(
   grid::rasterGrob(
-    png::readPNG(here(
-      "post",
-      "figures",
-      "assets",
-      "figure_4C.png"
-    )),
+    png::readPNG(here("post", "figures", "assets", "figure_4C.png")),
     interpolate = TRUE
   )
-) + theme(plot.margin = margin(t = -10))
+) +
+  theme(plot.margin = margin(t = -30))
 
 # --- assemble figure ---
 fig_4 <- (free(fig_4a, type = "label") + fig_4b) /
