@@ -30,7 +30,7 @@ cbpalette2 <- c(
   "#999999"  # grey
 )
 
-theme_pub <- function(base_size = 11, base_family = "Arial") {
+theme_pub <- function(base_size = 11, base_family = "") {
   theme_bw(base_size = base_size, base_family = base_family) +
     theme(
       panel.grid.minor.x = element_blank(),
