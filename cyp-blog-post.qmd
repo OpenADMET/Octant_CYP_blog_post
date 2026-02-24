@@ -75,6 +75,8 @@ For our first evaluation of CYP inhibition only, we included a CYP3A4 preincubat
 As a consequence, the IC50 values reported here reflect the combined effect of reversible inhibition and any time-dependent processes that occur during preincubation, rather than reversible inhibition alone.
 Using this approach, we identify 1095 molecules (79 %) with detectable inhibition (IC50 < 100 uM) (Fig 1C).
 
+#### Figure 1: CYP reactivity and inhibition screening overview {.figure-toc}
+
 {{< include post/figures/figure_1.qmd >}}
 
 :::{.figure-caption}
@@ -91,6 +93,8 @@ Red dashed line indicates the line of identity (no-change).
 Staying true to our ‘glass box’ approach, we surface well-level data, as shown in Figure 2 below.
 This enables exploration not only of the chemical diversity of compounds with variable degradation, but also understanding how each of the four replicates for each condition performs.
 
+#### Figure 2: Interactive comparison of CYP3A4 vs CYP2J2 reactivity {.figure-toc}
+
 {{< include post/figures/figure_2.qmd >}}
 
 :::{.figure-caption}
@@ -104,6 +108,8 @@ Compounds that fail to inhibit CYP3A4 are rarely substrates, consistent with a l
 Conversely, potent inhibitors often exhibit modest reactivity, indicating binding modes that enable occupancy, but not catalysis within the active site.
 These nuanced relationships are often invisible in public datasets where measurements are aggregated from disparate sources.
 By capturing self-consistent, multi-endpoint data, we enable the kind of multi-task modeling required to generalize up the complexity stack; from recombinant enzymes to microsomes, hepatocytes, and eventually, *in vivo* behavior.
+
+#### Figure 3: Interactive CYP3A4 inhibition potency vs reactivity graph {.figure-toc}
 
 {{< include post/figures/figure_3.qmd >}}
 
@@ -153,6 +159,8 @@ Driven by the physical requirements of the instrumentation, we found ourselves n
 - **Ionization Efficiency**: We use untargeted Time-of-flight (TOF-MS) to avoid the overhead of designing thousands of specific methods. But the hard reality is that not every molecule ionizes equally well under generic conditions. Standard workflows often circumvent this by tweaking parameters for every compound, but operating at OpenADMET’s scale makes individual optimization impractical. Instead, we acknowledge the constraint by pre-profiling every library to identify MS-compatible molecules. This effectively blinds us to a subset of chemical space, but ensures that the signal we *do* report is real rather than forced. *(Note: We are actively working to expand this window; see the ‘Confidence’ section below.)*
 - **Evaporation-Solubility-Activity Interdependencies:** In a 1536-well plate, surface-area-to-volume ratios are high. During the hour-long acquisition times, we initially lost ~50% of sample volume to evaporation. We solved this by boosting the quench buffer to 70% DMSO to lower the vapor pressure (**Fig 4A**). However, this created a new problem: the high solvent concentration caused the salts in our standard reaction buffer to precipitate ("crash out"). We couldn't simply remove the salts, as the enzyme requires a specific ionic environment to function. We had to thread the needle, identifying a lower ionic strength buffer (10 mM KPO4 / 10 mM MgCl2) that prevented precipitation *and* maintained CYP3A4 activity (**Fig 4B)**.
 - **Multiplexing: **Mass spectrometry is inherently serial. To make the economics work, we were opportunistic with the "dead space" in the mass spectrum. By pooling 7 compounds into our negative control wells, we exploit the high resolution of the TOF-MS to measure multiple parent signals from a single well. Since these wells only measure parent compound signal, there is no risk of spectral interference, increasing our overall throughput by 75% - a necessary step to prevent instrument time from becoming a bottleneck **(Fig 4C)**.
+
+#### Figure 4: Key steps in CYP assay development {.figure-toc}
 
 {{< include post/figures/figure_4.qmd >}}
 
@@ -213,6 +221,8 @@ Rather than obscuring these details** **, we share well-level data, plate maps,
 Additionally, close collaboration between experimentalists and data scientists informs the assay design process, letting us use empirical data to guide robust experimental design.
 For example, power calculations performed on our Tier 0 Echo-MS chemical profiling indicated that 4 biological replicates were sufficient to detect a 50% decrease in abundance at 95% power.
 
+#### Figure 5: Quality control approaches {.figure-toc}
+
 ![](post/Figure_5.png)
 
 :::{.figure-caption}
@@ -229,6 +239,8 @@ In our initial 11,000-member library, ~50% of compounds passed this filter when 
 Switching to 1 mM ammonium fluoride <a href="https://sciex.com/content/dam/SCIEX/pdf/tech-notes/pharma/MKT-35763-A_Accelerating_ADME_workflows_AEMS_for_high-throughput_metabolic_stability_studies_Final.pdf" class="cite-tip" data-tooltip="Haupt, L.; Bhalkikar, A.; Horkman, J. et al. Accelerating ADME workflows: AEMS for high-throughput metabolic stability studies, SCIEX technical note, MKT-35763-A.">[10]</a> expanded coverage to ~75%, reducing the ‘blind spots’ in our datasets (**Fig 6**).
 We will discuss our ongoing efforts to maximize our coverage of chemical space using methods such as negative mode ionization in a future blog post.
 
+#### Figure 6: Improved chemical coverage through mobile-phase optimization {.figure-toc}
+
 {{< include post/figures/figure_6.qmd >}}
 
 :::{.figure-caption}
@@ -244,6 +256,8 @@ Beyond the Tier 1 reactivity and inhibition screens described above, we are acti
 
 - **CYP Clearance Assay:** an automated, 2 uL 1536-well time-course reactivity assay to provide kinetic depth (Fig 7A).
 - **Time-Dependent Inhibition (TDI):** Identifies inhibitors that grow more potent with sustained enzyme exposure, a critical DDI liability (Fig 7B).
+
+#### Figure 7: Characterization of CYP metabolic clearance and time-dependent inhibition (TDI) assays in 1536-well format {.figure-toc}
 
 {{< include post/figures/figure_7.qmd >}}
 

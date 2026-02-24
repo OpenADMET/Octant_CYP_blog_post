@@ -181,7 +181,14 @@ panel_b <- ggplot() +
   scale_x_continuous(
     breaks = seq(-10, -4, 2),
     limits = c(-10, -4),
-    labels = \(x) parse(text = paste0("10^{", x, "}"))
+    labels = \(x) {
+      expo <- ifelse(
+        x < 0,
+        paste0("-~", abs(x)),
+        as.character(x)
+      )
+      parse(text = paste0("10^{", expo, "}"))
+    }
   ) +
   scale_y_continuous(
     labels = scales::label_percent(),
@@ -269,7 +276,14 @@ make_drc_plot <- function(drug_name) {
     scale_x_continuous(
       breaks = seq(-10, -4, 2),
       limits = c(-10, -4),
-      labels = \(x) parse(text = paste0("10^{", x, "}"))
+      labels = \(x) {
+        expo <- ifelse(
+          x < 0,
+          paste0("-~", abs(x)),
+          as.character(x)
+        )
+        parse(text = paste0("10^{", expo, "}"))
+      }
     ) +
     scale_y_continuous(
       labels = scales::label_percent(),

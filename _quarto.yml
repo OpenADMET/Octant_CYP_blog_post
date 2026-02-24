@@ -7,6 +7,8 @@ format:
     # self-contained: true  # re-enable for final publish
     toc: true
     toc-location: left
+    toc-expand: true
+    toc-depth: 4
     smooth-scroll: true
     number-sections: false
     lightbox: true
@@ -46,6 +48,24 @@ format:
             .cell { margin-top: 2em; margin-bottom: 2em; }
             .figure-caption { padding-bottom: 3em; }
             .cell + .figure-caption { margin-top: 0.5em; }
+            /* Hide figure-toc headings in the body */
+            h4.figure-toc {
+              height: 0; margin: 0; padding: 0;
+              overflow: hidden; visibility: hidden;
+            }
+            /* Style figure entries in the ToC sidebar */
+            #TOC a[href^="#figure-"] {
+              color: #888;
+              font-style: italic;
+            }
+            /* Collapse figure entries until parent section is active */
+            #TOC li:has(> a[href^="#figure-"]) {
+              display: none;
+            }
+            #TOC .active + ul > li:has(> a[href^="#figure-"]),
+            #TOC .active ~ ul > li:has(> a[href^="#figure-"]) {
+              display: list-item;
+            }
             .doc-version {
               font-size: 0.78em;
               color: #888;
@@ -144,5 +164,4 @@ knitr:
     message: true
     collapse: true
     echo: false
-    dev: ragg_png
     dpi: 300
