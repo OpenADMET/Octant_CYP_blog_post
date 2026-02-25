@@ -24,11 +24,6 @@ jobs:
       - name: Restore R packages (renv)
         uses: r-lib/actions/setup-renv@v2
 
-      # reticulate is used implicitly by knitr for Python chunks — renv won't
-      # auto-detect it as a project dependency, so install it explicitly.
-      - name: Install reticulate
-        run: Rscript -e 'install.packages("reticulate")'
-
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
