@@ -37,6 +37,7 @@ renv::install(depends, prompt = FALSE, dependencies = TRUE, project = wd)
 # snapshot dependencies
 renv::snapshot(prompt = FALSE, project = wd)
 renv::record("reticulate", project = wd)
+renv::hydrate(prompt = FALSE, project = wd)
 ```
 
 ```{r}
