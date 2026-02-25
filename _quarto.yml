@@ -119,7 +119,7 @@ format:
           </style>
     include-before-body:
       - text: |
-          <img src="post/assets/openadmet-logo.png" alt="OpenADMET logo" class="header-logo">
+          <a href="https://openadmet.ghost.io/"><img src="post/assets/openadmet-logo.png" alt="OpenADMET logo" class="header-logo"></a>
     include-after-body:
       - text: |
           <script>
