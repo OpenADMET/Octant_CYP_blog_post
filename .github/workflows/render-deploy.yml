@@ -39,7 +39,7 @@ jobs:
           use-public-rspm: true
 
       - name: Restore R packages (renv)
-        uses: r-lib/actions/setup-renv@v1
+        uses: r-lib/actions/setup-renv@v2
         with:
           cache-version: 1
 
