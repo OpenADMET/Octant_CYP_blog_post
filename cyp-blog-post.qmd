@@ -14,7 +14,7 @@ format:
 {{< include post/_setup_python.qmd >}}
 
 :::{.doc-version}
-Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 24, 2026 at 08:57 PM PST
+Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 25, 2026 at 10:31 AM PST
 :::
 
 For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we are an open-science consortium dedicated to building predictive models of safety and toxicity for small molecules to improve humanity’s ability to more reliably, cheaply, and effectively treat disease.
@@ -47,7 +47,7 @@ Crucially, we aimed to improve cost, capacity, and confidence simultaneously by 
 
 Details of our design decisions are provided in the sections below, and a snapshot of the data is shown in Figures 1, 2, and 3.
 While this is just a teaser dataset in anticipation of a future blind challenge, it is, to our knowledge, one of the largest publicly available internally consistent CYP datasets.
-The full dataset is available on **[GitHub](https://github.com/OpenADMET/Octant_CYP_blog_post)** **and** **Hugging Face** and includes the following:
+The full dataset is available on **[GitHub](https://github.com/OpenADMET/Octant_CYP_blog_post)** and includes the following:
 
 **Dataset 1: CYP Reaction Phenotyping**
 
@@ -296,7 +296,7 @@ Join the conversation on the [OpenADMET assay development Discord](https://disco
 
 ## Data Accessibility
 
-CYP Inhibition and reactivity datasets can be downloaded from **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)** or Hugging Face.
+CYP Inhibition and reactivity datasets can be downloaded from **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
 
 Blog post source code and assay protocols can be found on **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
 
