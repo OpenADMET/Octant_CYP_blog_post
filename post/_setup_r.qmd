@@ -49,6 +49,7 @@ library(ggplot2)
 library(ggbeeswarm)
 library(ggh4x)
 library(ggiraph)
+library(ggthemes)
 library(patchwork)
 library(here)
 
