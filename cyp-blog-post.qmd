@@ -62,7 +62,7 @@ The full dataset is available on **[GitHub](https://github.com/OpenADMET/Octant_
 - **Targets:** CYP3A4
 - **Scale:** 1,343 compounds (12-point dose-response curves), intersecting highly with the compounds assayed for reaction phenotyping.
 - **Assay Conditions:** These data were collected following a 30 minute pre-incubation with active CYP3A4 to capture inhibition by both parent molecule and any metabolites generated.
-- **Data:** Well-level fluorescence values, calculated IC50 values, and curve-fit statistics.
+- **Data:** Well-level fluorescence values, calculated IC<sub>50</sub> values, and curve-fit statistics.
 
 *Note: Our platform also captures raw data artifacts, such as mzML spectra from the mass spectrometer.
 To keep the repository accessible, we have not included these large files in the initial release.
@@ -73,8 +73,8 @@ The data show a rich set of active molecules measured against the 3 reactivity a
 For CYP reactivity, we observe 750 molecules (~61 %) that are depleted >50% in the CYP3A4 reactivity assay (Fig 1A), and 166 (~13 %) for CYP2J2 (Fig 1B).
 The larger set of active molecules for CYP3A4 is consistent with its well-known broad substrate recognition.
 For our first evaluation of CYP inhibition only, we included a CYP3A4 preincubation step prior to the inhibition assay to capture inhibition effects by both parent molecules and any generated metabolites.
-As a consequence, the IC50 values reported here reflect the combined effect of reversible inhibition and any time-dependent processes that occur during preincubation, rather than reversible inhibition alone.
-Using this approach, we identify 1095 molecules (79 %) with detectable inhibition (IC50 < 100 uM) (Fig 1C).
+As a consequence, the IC<sub>50</sub> values reported here reflect the combined effect of reversible inhibition and any time-dependent processes that occur during preincubation, rather than reversible inhibition alone.
+Using this approach, we identify 1095 molecules (79 %) with detectable inhibition (IC<sub>50</sub> < 100 uM) (Fig 1C).
 
 #### Figure 1: CYP reactivity and inhibition screening overview {.figure-toc}
 
@@ -117,7 +117,7 @@ By capturing self-consistent, multi-endpoint data, we enable the kind of multi-t
 
 :::{.figure-caption}
 **Figure 3:** Interactive CYP3A4 inhibition potency vs reactivity graph.
-Each point represents a compound plotted by IC50 (x-axis, log scale) and percent remaining in the CYP3A4 reaction phenotyping assay (y-axis).
+Each point represents a compound plotted by IC<sub>50</sub> (x-axis, log scale) and percent remaining in the CYP3A4 reaction phenotyping assay (y-axis).
 Marginal densities shown along each axis.
 Hover to view molecular structure, raw peak area swarm plot, and dose-response curve per compound.
 :::
@@ -197,7 +197,7 @@ Crucially, the ‘shape’ of this funnel changes depending on the physics of th
 For CYP **Inhibition**:
 
 - Tier 1*:* A single-concentration screen (typically 30 µM) to measure percent inhibition, using a reporter molecule that is rendered fluorescent by CYP metabolism. We perform this screen following a 30 minute pre-incubation with active CYP to also capture time-dependent inhibitors.
-- Tier 2*:* ‘Hits’ are promoted to a 12-point Dose-Response Curve (DRC) to determine an IC50 estimate. In the future, we will also include a time-dependent inhibition dose response experiment, see the ‘What’s next?’ section below.
+- Tier 2*:* ‘Hits’ are promoted to a 12-point Dose-Response Curve (DRC) to determine an IC<sub>50</sub> estimate. In the future, we will also include a time-dependent inhibition dose response experiment, see the ‘What’s next?’ section below.
 
 For CYP **Reactivity**:
 
@@ -211,11 +211,11 @@ By filtering out the non-interacting molecules in Tier 1, we preserve precious T
 
 ### Confidence (Quality & Context)
 
-A single IC50 value looks clean and definitive — but behind it lies a long chain of experimental decisions, each of which is a potential source of variance or bias.
+A single IC<sub>50</sub> value looks clean and definitive — but behind it lies a long chain of experimental decisions, each of which is a potential source of variance or bias.
 Peeling back that abstraction is essential: a modeler who only sees summary statistics has no way to distinguish a noisy measurement from a true outlier, or a plate artifact from a biological effect.
 
 At 1536-well density, systematic spatial artifacts — edge effects or liquid dispensing patterns — can mask or distort biological signals (Fig 5).
-For dose-response data, curve fitting decisions like Hill slope constraints or Emin assumptions can meaningfully shift IC50 values.
+For dose-response data, curve fitting decisions like Hill slope constraints or Emin assumptions can meaningfully shift IC<sub>50</sub> values.
 This is where statistical modeling can help ensure data quality.
 For example, when experimental data is fit to a model like a dose-response curve, the residuals, or how far each point falls from its ‘expected’ value, can identify outliers for exclusion **(Fig 5A)**.
 Residuals can be further aggregated spatially to identify edge effects **(Fig 5B)**, or visualized as a heatmap to reveal issues with liquid dispensing (**Fig 5C)**.
@@ -230,8 +230,8 @@ For example, power calculations performed on our Tier 0 Echo-MS chemical profili
 :::{.figure-caption}
 **Figure 5:** Quality control approaches.
 (A) Automated detection of outlier point, shown as ‘x’, from representative dose-response curve data.
-(B) Detection of plate edge-effects in distribution of log2 residual fold-changes by well ring position (1 = outermost), assessing positional plate effects.
-(C) Heatmap of log2 residual fold-change across plate rows and columns to identify spatial artifacts.
+(B) Detection of plate edge-effects in distribution of log<sub>2</sub> residual fold-changes by well ring position (1 = outermost), assessing positional plate effects.
+(C) Heatmap of log<sub>2</sub> residual fold-change across plate rows and columns to identify spatial artifacts.
 :::
 
 Equally important is ensuring our datasets cover a representative sample of chemical space with minimal bias.
@@ -247,7 +247,7 @@ We will discuss our ongoing efforts to maximize our coverage of chemical space u
 
 :::{.figure-caption}
 **Figure 6:** Improved chemical coverage through mobile-phase optimization.
-Hexbin density plot comparing log10 peak area for compounds measured via Echo-MS using carrier solvent (acetonitrile:methanol:water 80:10:10) supplemented with 5 mM ammonium formate (x-axis) vs 1 mM ammonium fluoride (y-axis) mobile phases.
+Hexbin density plot comparing log<sub>10</sub> peak area for compounds measured via Echo-MS using carrier solvent (acetonitrile:methanol:water 80:10:10) supplemented with 5 mM ammonium formate (x-axis) vs 1 mM ammonium fluoride (y-axis) mobile phases.
 Red dashed line indicates y=x identity.
 Top panel shows the median fold-increase (fluoride/formate) binned by formate signal intensity, demonstrating improved detection across signal ranges.
 :::
@@ -269,8 +269,8 @@ Beyond the Tier 1 reactivity and inhibition screens described above, we are acti
 Points show individual replicates; lines are loess fits.
 (B) Time-dependent inhibition assessment.
 Left: Troleandomycin dose-response curves with (black) and without (grey) 30-minute CYP3A4 preincubation.
-Red shaded region and arrow highlight the pIC50 shift between conditions.
-Right: Interactive pIC50 shift estimates (mean ± 95% CI) for known TDI compounds (troleandomycin, azamulin, verapamil, diltiazem) and non-TDI controls.
+Red shaded region and arrow highlight the pIC<sub>50</sub> shift between conditions.
+Right: Interactive pIC<sub>50</sub> shift estimates (mean ± 95% CI) for known TDI compounds (troleandomycin, azamulin, verapamil, diltiazem) and non-TDI controls.
 Dotted line indicates the 2-fold shift cutoff for TDI classification.
 Mouse over points to see underlying DRC curve shifts.
 :::
