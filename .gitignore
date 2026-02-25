@@ -4,6 +4,7 @@ _freeze/
 **/*.quarto_ipynb
 *_cache/
 *.rmarkdown
+cyp-blog-post_files/
 
 # Otter (Neovim R plugin) hidden buffers
 *.otter.R
