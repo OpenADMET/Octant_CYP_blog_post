@@ -23,8 +23,6 @@ jobs:
 
       - name: Restore R packages (renv)
         uses: r-lib/actions/setup-renv@v2
-        with:
-          cache-version: 1
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
