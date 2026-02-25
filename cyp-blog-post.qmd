@@ -14,7 +14,7 @@ format:
 {{< include post/_setup_python.qmd >}}
 
 :::{.doc-version}
-Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 25, 2026 at 10:31 AM PST
+Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 25, 2026 at 10:36 AM PST
 :::
 
 For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we are an open-science consortium dedicated to building predictive models of safety and toxicity for small molecules to improve humanity’s ability to more reliably, cheaply, and effectively treat disease.
@@ -296,7 +296,5 @@ Join the conversation on the [OpenADMET assay development Discord](https://disco
 
 ## Data Accessibility
 
-CYP Inhibition and reactivity datasets can be downloaded from **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
-
-Blog post source code and assay protocols can be found on **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
+All datasets, blog post source code and assay protocols can be found on **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
 
