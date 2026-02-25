@@ -53,10 +53,10 @@ ic50_react["mol_img"] = ic50_react["standardized_smiles"].apply(smiles_to_svg)
 # --- DRC plot thumbnails ---
 
 def copy_drc_thumb(batch_id):
-    path = repo_root / f"data/inhibition_drc-plots/{batch_id}_c7111_no-ctrls.png"
+    path = repo_root / f"data/inhibition_drc-plots-webp/{batch_id}_c7111_no-ctrls.webp"
     if not path.exists():
         return ""
-    return _save_tooltip(path.read_bytes(), f"drc_{batch_id}.png")
+    return _save_tooltip(path.read_bytes(), f"drc_{batch_id}.webp")
 
 with ThreadPoolExecutor() as pool:
     ic50_react["drc_img"] = list(pool.map(copy_drc_thumb, ic50_react["ocnt_batch"]))
