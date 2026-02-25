@@ -44,10 +44,18 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      - name: Render and Publish
+      # Render first so Python writes tooltip assets into _site/assets/tooltips/.
+      # publish@v2 renders internally to a temp dir and misses those files,
+      # so we render separately and then publish with --no-render.
+      - name: Render
+        run: quarto render
+        env:
+          REPO_ROOT: ${{ github.workspace }}
+
+      - name: Publish
         uses: quarto-dev/quarto-actions/publish@v2
         with:
           target: gh-pages
+          render: "false"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_ROOT: ${{ github.workspace }}
