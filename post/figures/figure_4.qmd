@@ -9,30 +9,8 @@
 theme_set(theme_pub(base_size = 8))
 
 # --- data loading ---
-rwt115_data <- readRDS(here("data", "rds", "RWT115_anno_data_df.RDS"))
-rwt92_norm_df <- readRDS(here("data", "rds", "RWT92_norm_data.RDS"))
-
-rwt112_data <- readRDS(here("data", "rds", "RWT112_anno_data_df.RDS")) |>
-  filter(Plate == "Plate4") |>
-  filter(dilution == 1) |>
-  filter(CYP_conc == "10nM") |>
-  filter(assay_buffer %in% c("100 mM KPO4", "10 mM KPO4 + 10 mM MgCl2")) |>
-  filter(component_lab == "fragments summed") |>
-  filter(drug_M == 5e-6) |>
-  mutate(
-    Sample = case_when(
-      assay_buffer == "100 mM KPO4" ~ "Std CYP reaction",
-      assay_buffer == "10 mM KPO4 + 10 mM MgCl2" ~ "Optimized CYP matrix"
-    )
-  ) |>
-  mutate(
-    common_name = case_when(
-      common_name == "testosterone" ~ "Testosterone",
-      common_name == "midazolam" ~ "Midazolam",
-      .default = common_name
-    )
-  ) |>
-  select(Sample, common_name, drug_M, peak_area)
+rwt115_data <- read_tsv(here("data", "evaporation.tsv"))
+rwt92_norm_df <- read_tsv(here("data", "buffer_activity.tsv"))
 
 # --- panel A: evaporation ---
 fig_4a <- rwt115_data |>
@@ -101,7 +79,7 @@ fig_4b <- rwt92_norm_df |>
     )
   ) |>
   ggplot(aes(
-    x = `buffer ionic strength (M)`,
+    x = buffer_ionic_strength_M,
     y = fc,
     group = condition,
     color = condition
@@ -148,18 +126,6 @@ fig_4b <- rwt92_norm_df |>
   guides(
     color = guide_legend(ncol = 1, override.aes = list(size = 2)),
     fill = NULL
-  )
-
-# --- panel B bottom: signal improvement ---
-fold_change_labels <- rwt112_data |>
-  group_by(common_name) |>
-  summarise(
-    std_mean = mean(peak_area[Sample == "Std CYP reaction"]),
-    opt_mean = mean(peak_area[Sample == "Optimized CYP matrix"]),
-    fold_change = signif(opt_mean / std_mean, 2),
-    peak_area = max(opt_mean, std_mean) * 2,
-    Sample = "Optimized CYP matrix",
-    .groups = "drop"
   )
 
 # --- panel C: platemap image ---

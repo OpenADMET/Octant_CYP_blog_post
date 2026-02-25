@@ -24,12 +24,11 @@
 
 ## Experimental Design
 
-- Two experimental conditions per compound: +/- CYP activity (controlled by omission of NADPH regeneration system)
-- Experimental condition: CYP enzyme + buffer + NADPH regeneration system
-- Control condition: CYP enzyme + buffer - NADPH regeneration system
+- Two conditions per compound, controlling CYP activity by omission of the NADPH regeneration system (IRS + NADP):
+  1. **Control (rows A–D):** + CYP / − IRS / − NADP — enzyme present but inactive without cofactor regeneration
+  2. **Experimental (rows E–AF):** + CYP / + IRS / + NADP — fully active enzyme with cofactor regeneration
 - 4 replicates per condition in the experimental (+NADPH) plates
-- Negative control wells (-NADPH) are pooled (7 compounds per well) since only TOF-MS (MS1) quantification is used, reducing total plates from 14 to 8 (4 per CYP isoform)
-- 10 wells reserved for control substrates (midazolam/albendazole) per plate
+- Negative control wells (-NADPH) are pooled (7 compounds per well)
 - 8 wells -NADP, 8 wells +NADP for controls
 - Assay buffer: 10 mM KPO4, pH 8 + 10 mM MgCl2
 
@@ -54,8 +53,8 @@
 1. **Prepare CYP master mix.**
 
 2. **Assign MultiFlo dispense lines:**
-   - Pin 1 (topmost): -regen / -NADP (control)
-   - Pins 2-8: +regen / +NADP (experimental)
+   - Pin 1 (topmost) → rows A–D: **+ CYP / − IRS / − NADP** (control)
+   - Pins 2–8 → rows E–AF: **+ CYP / + IRS / + NADP** (experimental)
 
 3. **Dispense CYP master mix** (both - and + regen conditions):
    - Prime 1x, then dispense 1 uL into each well.
@@ -63,7 +62,7 @@
    - Spin 500g x 30 sec.
    - Incubate at RT for 15 min.
 
-4. **Dispense NADP solution** (or buffer only for Pin 1 / control condition):
+4. **Dispense NADP solution** (rows E–AF) or buffer only (rows A–D, control):
    - Prime 2x then dispense 1 uL into each well.
 
 5. **Incubate:**

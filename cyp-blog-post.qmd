@@ -14,7 +14,7 @@ format:
 {{< include post/_setup_python.qmd >}}
 
 :::{.doc-version}
-Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 24, 2026 at 12:00 PM PST
+Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 24, 2026 at 05:10 PM PST
 :::
 
 For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we are an open-science consortium dedicated to building predictive models of safety and toxicity for small molecules to improve humanity’s ability to more reliably, cheaply, and effectively treat disease.
@@ -27,6 +27,7 @@ This creates a "black box" in which ML practitioners must guess the quality, con
 
 OpenADMET is developing a scaled and consistent data engine to support predictive ADMET models.
 We are applying the technologies and rigor of target-based drug discovery to the mechanisms underlying ADMET properties, starting with metabolism.
+Octant is a drug discovery company that has built a platform to measure the interface between biology and chemistry at scale.
 As a founding member of OpenADMET, Octant is leveraging this infrastructure to build diverse, dense, and self-consistent ADMET datasets.
 More importantly, we don’t see data generation as a “black box” service, but as a “glass box” collaboration.
 We aim to establish a tight feedback loop among experimentalists, data scientists, and ML practitioners to ensure the assays, datasets, benchmarks, and competitions are as useful as possible.
@@ -106,6 +107,7 @@ Hover to view molecular structure and raw peak area swarm plots per compound.
 Taking this further, comparing molecules’ CYP3A4 inhibition with reactivity provides additional context and a more complete picture of the underlying assays (Fig. 1D, Fig. 3).
 Compounds that fail to inhibit CYP3A4 are rarely substrates, consistent with a lack of binding affinity.
 Conversely, potent inhibitors often exhibit modest reactivity, indicating binding modes that enable occupancy, but not catalysis within the active site.
+Some of these potent inhibitors are possibly time-dependent, given the active CYP pre-incubation step.
 These nuanced relationships are often invisible in public datasets where measurements are aggregated from disparate sources.
 By capturing self-consistent, multi-endpoint data, we enable the kind of multi-task modeling required to generalize up the complexity stack; from recombinant enzymes to microsomes, hepatocytes, and eventually, *in vivo* behavior.
 
