@@ -33,3 +33,4 @@ data/raw/
 # Claude / Serena
 .claude/
 .serena/
+_site/
