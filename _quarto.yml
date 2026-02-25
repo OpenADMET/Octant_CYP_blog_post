@@ -90,6 +90,11 @@ format:
             }
             /* Instant CSS tooltips for citation links */
             .cite-tip { position: relative; }
+            .header-logo {
+              display: block;
+              margin: 1.5em auto 0.5em;
+              max-width: 280px;
+            }
             .cite-tip:hover::after {
               content: attr(data-tooltip);
               position: absolute;
@@ -110,6 +115,9 @@ format:
               pointer-events: none;
             }
           </style>
+    include-before-body:
+      - text: |
+          <img src="post/assets/openadmet-logo.png" alt="OpenADMET logo" class="header-logo">
     include-after-body:
       - text: |
           <script>

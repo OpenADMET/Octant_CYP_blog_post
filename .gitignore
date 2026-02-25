@@ -26,6 +26,7 @@ __pycache__/
 # Preprocessing scripts & raw data
 scripts/
 data/raw/
+data/inhibition_drc-plots/
 
 # Editor
 *~
