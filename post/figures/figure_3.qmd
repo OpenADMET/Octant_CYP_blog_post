@@ -114,7 +114,7 @@ def make_figure_3():
 
     # main scatter
     p = bokeh_figure(
-        width=500, height=500,
+        width=650, height=500,
         x_axis_label="CYP3A4 IC50",
         y_axis_label="CYP3A4 (% remaining)",
         x_axis_type="log",
@@ -124,9 +124,13 @@ def make_figure_3():
     p.xaxis.formatter = si_formatter
     p.xaxis.axis_label_text_font_style = "normal"
     p.yaxis.axis_label_text_font_style = "normal"
+    p.grid.visible = False
+    p.xaxis.minor_tick_line_color = None
+    p.yaxis.minor_tick_line_color = None
+    from bokeh.models import Span
+    p.add_layout(Span(location=100, dimension="width", line_color="#aaa", line_dash="dashed", line_width=1))
     p.scatter("x", "y", source=source, size=6,
               fill_alpha=0.35, line_color="white", line_width=0.5)
-    p.xaxis.minor_tick_line_color = None
     p.add_tools(HoverTool(tooltips=TOOLTIPS))
 
     # marginal density: top (IC50, log-space)
