@@ -9,7 +9,7 @@ format:
     # self-contained: true  # re-enable for final publish
     toc: true
     toc-location: left
-    toc-expand: true
+    toc-expand: 2
     toc-depth: 4
     smooth-scroll: true
     number-sections: false
@@ -60,12 +60,20 @@ format:
               color: #888;
               font-style: italic;
             }
-            /* Collapse figure entries until parent section is active */
+            /* Hide figure entries in ToC by default */
             #TOC li:has(> a[href^="#figure-"]) {
               display: none;
             }
-            #TOC .active + ul > li:has(> a[href^="#figure-"]),
-            #TOC .active ~ ul > li:has(> a[href^="#figure-"]) {
+            /* After first scroll, show figures under the active section */
+            body.toc-scrolled #TOC li:has(> a.active) > ul > li:has(> a[href^="#figure-"]) {
+              display: list-item;
+            }
+            /* Always show a figure whose own link is active */
+            #TOC li:has(> a.active[href^="#figure-"]) {
+              display: list-item;
+            }
+            /* When any figure is active, show its siblings too */
+            #TOC ul:has(> li > a.active[href^="#figure-"]) > li:has(> a[href^="#figure-"]) {
               display: list-item;
             }
             .doc-version {
@@ -97,6 +105,55 @@ format:
               margin: 1.5em auto 0.5em;
               max-width: 280px;
             }
+            /* Scroll progress header */
+            .progress-header {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 44px;
+              background: white;
+              border-bottom: 1px solid #e0e0e0;
+              display: flex;
+              align-items: center;
+              padding: 0 20px;
+              z-index: 1100;
+              transform: translateY(-100%);
+              transition: transform 0.3s ease;
+            }
+            .progress-header.visible {
+              transform: translateY(0);
+            }
+            #quarto-sidebar-toc-left {
+              padding-top: 50px;
+            }
+            .progress-header-logo {
+              height: 24px;
+              flex-shrink: 0;
+            }
+            .progress-header-title {
+              font-size: 0.82em;
+              font-weight: 600;
+              color: #333;
+              margin-left: 14px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .reading-progress-track {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 3px;
+              background: #e8e8e8;
+            }
+            .reading-progress-fill {
+              height: 100%;
+              width: 0%;
+              background: #1d4ed8 !important;
+              transition: width 0.15s linear;
+            }
             .cite-tip:hover::after {
               content: attr(data-tooltip);
               position: absolute;
@@ -119,10 +176,39 @@ format:
           </style>
     include-before-body:
       - text: |
+          <div class="progress-header">
+            <a href="https://openadmet.ghost.io/"><img src="post/assets/openadmet-logo.png" alt="OpenADMET" class="progress-header-logo"></a>
+            <span class="progress-header-title">Building the OpenADMET Data Engine</span>
+            <div class="reading-progress-track"><div class="reading-progress-fill"></div></div>
+          </div>
           <a href="https://openadmet.ghost.io/"><img src="post/assets/openadmet-logo.png" alt="OpenADMET logo" class="header-logo"></a>
     include-after-body:
       - text: |
           <script>
+            // Enable ToC figure entries after first scroll (keeps ToC clean on load)
+            window.addEventListener('scroll', function() {
+              document.body.classList.add('toc-scrolled');
+            }, { once: true });
+
+            // Progress header: show after scrolling past hero, update progress bar
+            (function() {
+              var header = document.querySelector('.progress-header');
+              var fill = document.querySelector('.reading-progress-fill');
+              if (!header || !fill) return;
+              var threshold = 300; // px before header appears
+              window.addEventListener('scroll', function() {
+                var scrollTop = window.scrollY;
+                var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                var pct = docHeight > 0 ? Math.min(scrollTop / docHeight * 100, 100) : 0;
+                fill.style.width = pct + '%';
+                if (scrollTop > threshold) {
+                  header.classList.add('visible');
+                } else {
+                  header.classList.remove('visible');
+                }
+              });
+            })();
+
             // Copy figure captions into lightbox descriptions
             document.querySelectorAll('.figure-caption').forEach(function(cap) {
               var prev = cap.previousElementSibling;
