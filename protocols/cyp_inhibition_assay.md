@@ -7,8 +7,11 @@
 
 ## Assay Parameters
 
+Compounds were tested in 12-point dose-response curves ranging from ~0.1 nM to ~50 uM (~3-fold serial dilutions).
+
 | Parameter                          | Value                                           |
 | ---------------------------------- | ----------------------------------------------- |
+| Compound concentration range       | ~0.1 nM – 50 uM (12-point, ~3-fold dilutions)  |
 | CYP3A4 concentration               | 5 nM (in assay)                                 |
 | NADP+ concentration                | 100 uM (in assay)                               |
 | Internal regeneration system (IRS) | 1X (in assay)                                   |
