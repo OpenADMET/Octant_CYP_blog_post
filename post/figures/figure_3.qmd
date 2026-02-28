@@ -3,7 +3,7 @@
 #| cache: false
 
 from bokeh.layouts import gridplot
-from bokeh.models import CustomJSTickFormatter
+from bokeh.models import CustomJSTickFormatter, FixedTicker
 from scipy.stats import gaussian_kde
 from concurrent.futures import ThreadPoolExecutor
 
@@ -13,6 +13,9 @@ ic50 = pd.read_csv(repo_root / "data/inhibition.tsv", sep="\t")
 ic50_avg = ic50.groupby("ocnt_batch").agg(
     CYP3A4_pIC50=("CYP3A4_pIC50", "mean"),
     standardized_smiles=("standardized_smiles", "first"),
+    activity_status=("activity_status", "first"),
+    plate_qc_status=("plate_qc_status", "first"),
+    qc_flag_primary=("qc_flag_primary", "first"),
 ).reset_index()
 
 # --- compute CYP3A4 % remaining from reactivity data ---
@@ -35,16 +38,35 @@ ic50_react = ic50_avg.merge(
     how="inner",
 ).dropna(subset=["pct_remaining"])
 
-# flag inactive compounds (no fitted IC50) and assign sentinel
-ic50_react["inactive"] = ic50_react["CYP3A4_pIC50"].isna()
-ic50_react["CYP3A4_pIC50"] = ic50_react["CYP3A4_pIC50"].fillna(1)
+# categorize compounds:
+#   - "active": has a fitted pIC50
+#   - "qc_fail": no pIC50 due to QC failure (plate, baseline, incomplete, etc.)
+#                but activity_status = YES — real activity was detected
+#   - "inactive": genuinely inactive (activity_status = NO)
+has_pic50 = ic50_react["CYP3A4_pIC50"].notna()
+qc_fail = ~has_pic50 & (ic50_react["activity_status"] == "YES")
+inactive = ~has_pic50 & ~qc_fail
+
+# assign sentinel pIC50 values for plotting on the log x-axis
+ic50_react.loc[inactive, "CYP3A4_pIC50"] = 0.5           # rightmost sentinel
+ic50_react.loc[qc_fail, "CYP3A4_pIC50"] = 1.5   # just left of inactive
 
 # convert pIC50 to IC50 (molar)
 ic50_react["IC50_M"] = 10 ** (-ic50_react["CYP3A4_pIC50"])
 
-# tooltip label
+# tooltip labels
 ic50_react["pic50_label"] = ic50_react["CYP3A4_pIC50"].apply(lambda v: f"{v:.1f}")
-ic50_react.loc[ic50_react["inactive"], "pic50_label"] = "Inactive"
+# build a specific QC reason for each failed compound
+def qc_reason(row):
+    if row["plate_qc_status"] == "FAIL":
+        return "Not estimated (plate QC fail)"
+    flag = row.get("qc_flag_primary", "")
+    if flag and flag != "PASS":
+        return f"Not estimated ({flag.lower()})"
+    return "Not estimated (QC)"
+
+ic50_react.loc[qc_fail, "pic50_label"] = ic50_react.loc[qc_fail].apply(qc_reason, axis=1)
+ic50_react.loc[inactive, "pic50_label"] = "Inactive"
 
 # --- molecule images ---
 
@@ -101,10 +123,14 @@ def make_figure_3():
     lo_y = min(y.min(), 0) - 5
     hi_y = max(y.max(), 105) + 5
 
+    # sentinel positions on the IC50 (molar) axis
+    PLATE_QC_SENTINEL = 10 ** -1.5   # ~0.032 M
+    INACTIVE_SENTINEL = 10 ** -0.5   # ~0.316 M
+
     si_formatter = CustomJSTickFormatter(code="""
         const v = tick;
-        if (v >= 1)       return v.toFixed(0) + ' M';
-        if (v > 0.05)     return 'Inactive';
+        if (Math.abs(v - 0.316) < 0.05)   return 'Inactive';
+        if (Math.abs(v - 0.032) < 0.005)  return 'QC\\nfail';
         if (v >= 1e-3)    return (v * 1e3).toFixed(0) + ' mM';
         if (v >= 1e-6)    return (v * 1e6).toFixed(0) + ' µM';
         if (v >= 1e-9)    return (v * 1e9).toFixed(0) + ' nM';
@@ -121,6 +147,10 @@ def make_figure_3():
         tools="pan,wheel_zoom,box_zoom,reset,save",
         y_range=(lo_y, hi_y),
     )
+    p.xaxis.ticker = FixedTicker(ticks=[
+        1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3,
+        PLATE_QC_SENTINEL, INACTIVE_SENTINEL,
+    ])
     p.xaxis.formatter = si_formatter
     p.xaxis.axis_label_text_font_style = "normal"
     p.yaxis.axis_label_text_font_style = "normal"
