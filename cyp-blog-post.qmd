@@ -1,7 +1,5 @@
 ---
 title: "Building the OpenADMET Data Engine"
-author: "Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi Handly, Pat Walters, Sri Kosuri"
-date: 2026-03-02
 format:
   html:
     output-file: index.html
@@ -13,8 +11,16 @@ format:
 
 {{< include post/_setup_python.qmd >}}
 
-:::{.doc-version}
-Source: [Google Doc](https://docs.google.com/document/d/1m6I11d93iwLTR8LS7BytU9zliY5CtnculsUsuHzxGBE), revised February 25, 2026 at 10:36 AM PST
+:::{.banner-animation}
+{{< include post/figures/banner_drc_animation.qmd >}}
+:::
+
+:::{.doc-authors}
+Robert Warneford-Thomson, Steven Edgar, Hugo MacDermott-Opeskin, Naomi Handly, Pat Walters, Sri Kosuri
+:::
+
+:::{.doc-date}
+Published March 2, 2026
 :::
 
 For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we are an open-science consortium dedicated to building predictive models of safety and toxicity for small molecules to improve humanity’s ability to more reliably, cheaply, and effectively treat disease.
@@ -23,12 +29,11 @@ We aim to achieve this by developing new assays, datasets, benchmarks, and compe
 Our recent [ExpansionRx Challenge](https://openadmet.ghost.io/lessons-learned-from-the-openadmet-expansionrx-blind-challenge/) highlighted a critical gap: among 370 participants, the top four winners relied on proprietary data.
 This is not surprising as public ADMET datasets are sparse, poorly documented/controlled, noisy, and contradictory [<a href="https://doi.org/10.1021/acs.jcim.4c00049" class="cite-tip" data-tooltip="Landrum, G.; Riniker, S. (2024). Combining IC 50 or K i Values from Different Sources Is a Source of Significant Noise. Journal of Chemical Information and Modeling.">2</a>].
 Worse, the decisions made during data generation are often opaque or explicitly hidden.
-This creates a "black box" in which ML practitioners must guess the quality, context, and limitations of the inputs, which means combining data from mismatched assay sources often degrades performance rather than improve it.
+This creates a "black box" in which ML practitioners must guess the quality, context, and limitations of the inputs, which means combining data from mismatched assay sources often degrades performance rather than improve it.
 
 OpenADMET is developing a scaled and consistent data engine to support predictive ADMET models.
 We are applying the technologies and rigor of target-based drug discovery to the mechanisms underlying ADMET properties, starting with metabolism.
-Octant is a drug discovery company that has built a platform to measure the interface between biology and chemistry at scale.
-As a founding member of OpenADMET, Octant is leveraging this infrastructure to build diverse, dense, and self-consistent ADMET datasets.
+[Octant](https://www.octant.bio) is a small molecule drug discovery company that has built a platform to measure the interface between biology and chemistry at scale. As a founding member of OpenADMET, Octant is leveraging this infrastructure to build diverse, dense, and self-consistent ADMET datasets.
 More importantly, we don’t see data generation as a “black box” service, but as a “glass box” collaboration.
 We aim to establish a tight feedback loop among experimentalists, data scientists, and ML practitioners to ensure the assays, datasets, benchmarks, and competitions are as useful as possible.
 We are hoping you, the community, can help us improve, and are looking for some feedback.
@@ -46,7 +51,7 @@ To validate our data generation platform, we screened approximately 1,200 compou
 Crucially, we aimed to improve cost, capacity, and confidence simultaneously by miniaturizing reaction volumes, introducing robust controls, and replacing standard LC-MS with acoustic ejection mass spectrometry (Echo-MS) for reactivity.
 
 Details of our design decisions are provided in the sections below, and a snapshot of the data is shown in Figures 1, 2, and 3.
-While this is just a teaser dataset in anticipation of a future blind challenge, it is, to our knowledge, one of the largest publicly available internally consistent CYP datasets.
+While this is just a teaser dataset in anticipation of a future blind challenge, it is, to our knowledge, one of the largest publicly-available internally consistent CYP datasets.
 The full dataset is available on **[GitHub](https://github.com/OpenADMET/Octant_CYP_blog_post)** and includes the following:
 
 **Dataset 1: CYP Reaction Phenotyping**
@@ -74,7 +79,7 @@ For CYP reactivity, we observe 750 molecules (~61 %) that are depleted >50% in t
 The larger set of active molecules for CYP3A4 is consistent with its well-known broad substrate recognition.
 For our first evaluation of CYP inhibition only, we included a CYP3A4 preincubation step prior to the inhibition assay to capture inhibition effects by both parent molecules and any generated metabolites.
 As a consequence, the IC<sub>50</sub> values reported here reflect the combined effect of reversible inhibition and any time-dependent processes that occur during preincubation, rather than reversible inhibition alone.
-Using this approach, we identify 1095 molecules (79 %) with detectable inhibition (IC<sub>50</sub> < 100 uM) (Fig 1C).
+Using this approach, we identify 1095 molecules (79 %) with detectable inhibition (IC<sub>50</sub> < 100 µM) (Fig 1C).
 
 #### Figure 1: CYP screening overview {.figure-toc}
 
@@ -104,7 +109,7 @@ Each point represents a single molecule, and marginal density curves show the di
 Hover to view molecular structure and raw peak area swarm plots per compound.
 :::
 
-Taking this further, comparing molecules’ CYP3A4 inhibition with reactivity provides additional context and a more complete picture of the underlying assays (Fig. 1D, Fig. 3).
+Taking this further, comparing molecules’ CYP3A4 inhibition with reactivity provides additional context and a more complete picture of the underlying assays (Fig. 1F, Fig. 3).
 Compounds that fail to inhibit CYP3A4 are rarely substrates, consistent with a lack of binding affinity.
 Conversely, potent inhibitors often exhibit modest reactivity, indicating binding modes that enable occupancy, but not catalysis within the active site.
 Some of these potent inhibitors are possibly time-dependent, given the active CYP pre-incubation step.
@@ -256,7 +261,7 @@ Top panel shows the median fold-increase (fluoride/formate) binned by formate si
 
 Beyond the Tier 1 reactivity and inhibition screens described above, we are actively developing additional endpoints to profile CYP activity (Fig 7):
 
-- **CYP Clearance Assay:** an automated, 2 uL 1536-well time-course reactivity assay to provide kinetic depth (Fig 7A).
+- **CYP Clearance Assay:** an automated, 2 µL 1536-well time-course reactivity assay to provide kinetic depth (Fig 7A).
 - **Time-Dependent Inhibition (TDI):** Identifies inhibitors that grow more potent with sustained enzyme exposure, a critical DDI liability (Fig 7B).
 
 #### Figure 7: Clearance & TDI assays {.figure-toc}
@@ -297,4 +302,11 @@ Join the conversation on the [OpenADMET assay development Discord](https://disco
 ## Data Accessibility
 
 All datasets, blog post source code and assay protocols can be found on **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
+
+
+<!-- content hash: 1429c0b -->
+
+:::{.doc-version}
+Last updated: February 27, 2026
+:::
 

@@ -4,9 +4,9 @@ project:
     - cyp-blog-post.qmd
   resources:
     - post/assets/openadmet-logo.png
+    - post/figures/banner_drc_animation.gif
 format:
   html:
-    # self-contained: true  # re-enable for final publish
     toc: true
     toc-location: left
     toc-expand: 2
@@ -15,165 +15,11 @@ format:
     number-sections: false
     lightbox: true
     mainfont: "Inter, sans-serif"
+    css: post/styles.css
     include-in-header:
       - text: |
           <link rel="preconnect" href="https://rsms.me/">
           <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-          <style>
-            :root { font-feature-settings: 'liga' 1, 'calt' 1; }
-            @supports (font-variation-settings: normal) {
-              :root { font-family: InterVariable, sans-serif; }
-            }
-            .figure-caption {
-              font-size: 0.85em;
-              color: #555;
-              line-height: 1.45;
-              margin-top: 0.5em;
-              margin-bottom: 1.5em;
-            }
-            /* Center static images; keep widgets full-width */
-            .cell-output-display > p,
-            .cell-output-display > img {
-              display: block;
-              margin-left: auto;
-              margin-right: auto;
-              margin-bottom: 0;
-              text-align: center;
-            }
-            /* Spacing: paragraphs, headings, figures, lists */
-            main { line-height: 1.75; }
-            main p { margin-bottom: 1.6em; }
-            main h2 { margin-top: 2.5em; margin-bottom: 1em; }
-            main h3 { margin-top: 2em; margin-bottom: 0.8em; }
-            main ul, main ol { margin-top: 1em; margin-bottom: 1.6em; }
-            main li { margin-bottom: 0.4em; }
-            .cell { margin-top: 2em; margin-bottom: 2em; }
-            .figure-caption { padding-bottom: 3em; }
-            .cell + .figure-caption { margin-top: 0.5em; }
-            /* Hide figure-toc headings in the body */
-            h4.figure-toc {
-              height: 0; margin: 0; padding: 0;
-              overflow: hidden; visibility: hidden;
-            }
-            /* Style figure entries in the ToC sidebar */
-            #TOC a[href^="#figure-"] {
-              color: #888;
-              font-style: italic;
-            }
-            /* Hide figure entries in ToC by default */
-            #TOC li:has(> a[href^="#figure-"]) {
-              display: none;
-            }
-            /* After first scroll, show figures under the active section */
-            body.toc-scrolled #TOC li:has(> a.active) > ul > li:has(> a[href^="#figure-"]) {
-              display: list-item;
-            }
-            /* Always show a figure whose own link is active */
-            #TOC li:has(> a.active[href^="#figure-"]) {
-              display: list-item;
-            }
-            /* When any figure is active, show its siblings too */
-            #TOC ul:has(> li > a.active[href^="#figure-"]) > li:has(> a[href^="#figure-"]) {
-              display: list-item;
-            }
-            .doc-version {
-              font-size: 0.78em;
-              color: #888;
-              border-top: 1px solid #e0e0e0;
-              padding-top: 0.8em;
-              margin-top: 3em;
-            }
-            /* Fix ggiraph fullscreen: height:90vw is a bug (should be width) */
-            .ggiraph-fullscreen-content { height: auto; width: 90vw; }
-            .ggiraph-fullscreen-content:has(.ggiraph-fullscreen-caption) {
-              flex-direction: column;
-            }
-            .ggiraph-fullscreen-caption {
-              font-size: 0.8em;
-              color: #000;
-              line-height: 1.4;
-              padding: 8px 20px 0;
-              text-align: left;
-              max-height: 15vh;
-              overflow-y: auto;
-              margin-top: auto;
-            }
-            /* Instant CSS tooltips for citation links */
-            .cite-tip { position: relative; }
-            .header-logo {
-              display: block;
-              margin: 1.5em auto 0.5em;
-              max-width: 280px;
-            }
-            /* Scroll progress header */
-            .progress-header {
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 44px;
-              background: white;
-              border-bottom: 1px solid #e0e0e0;
-              display: flex;
-              align-items: center;
-              padding: 0 20px;
-              z-index: 1100;
-              transform: translateY(-100%);
-              transition: transform 0.3s ease;
-            }
-            .progress-header.visible {
-              transform: translateY(0);
-            }
-            #quarto-sidebar-toc-left {
-              padding-top: 50px;
-            }
-            .progress-header-logo {
-              height: 24px;
-              flex-shrink: 0;
-            }
-            .progress-header-title {
-              font-size: 0.82em;
-              font-weight: 600;
-              color: #333;
-              margin-left: 14px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
-            .reading-progress-track {
-              position: absolute;
-              bottom: 0;
-              left: 0;
-              right: 0;
-              height: 3px;
-              background: #e8e8e8;
-            }
-            .reading-progress-fill {
-              height: 100%;
-              width: 0%;
-              background: #1d4ed8 !important;
-              transition: width 0.15s linear;
-            }
-            .cite-tip:hover::after {
-              content: attr(data-tooltip);
-              position: absolute;
-              bottom: calc(100% + 4px);
-              left: 50%;
-              transform: translateX(-50%);
-              background: white;
-              border: 1px solid #ccc;
-              border-radius: 6px;
-              padding: 6px 10px;
-              font-size: 0.8em;
-              line-height: 1.4;
-              white-space: normal;
-              width: max-content;
-              max-width: 350px;
-              box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
-              z-index: 1000;
-              pointer-events: none;
-            }
-          </style>
     include-before-body:
       - text: |
           <div class="progress-header">
@@ -194,6 +40,7 @@ format:
             (function() {
               var header = document.querySelector('.progress-header');
               var fill = document.querySelector('.reading-progress-fill');
+              var tocSidebar = document.getElementById('quarto-sidebar-toc-left');
               if (!header || !fill) return;
               var threshold = 300; // px before header appears
               window.addEventListener('scroll', function() {
@@ -201,11 +48,9 @@ format:
                 var docHeight = document.documentElement.scrollHeight - window.innerHeight;
                 var pct = docHeight > 0 ? Math.min(scrollTop / docHeight * 100, 100) : 0;
                 fill.style.width = pct + '%';
-                if (scrollTop > threshold) {
-                  header.classList.add('visible');
-                } else {
-                  header.classList.remove('visible');
-                }
+                var past = scrollTop > threshold;
+                header.classList.toggle('visible', past);
+                if (tocSidebar) tocSidebar.classList.toggle('toc-visible', past);
               });
             })();
 
@@ -251,6 +96,9 @@ format:
               }).observe(document.body, { childList: true });
             });
           </script>
+          <div class="site-footer">
+            This page is built with ❤️ and <a href="https://quarto.org">Quarto</a>
+          </div>
 execute:
   warning: false
 knitr:

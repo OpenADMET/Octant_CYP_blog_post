@@ -1,0 +1,73 @@
+```{r}
+#| label: banner-drc-animation
+#| cache: true
+#| echo: false
+#| message: false
+#| warning: false
+
+library(scico)
+library(gganimate)
+
+# --- load inhibition data and filter active compounds ---
+
+inh <- read_tsv(here("data", "inhibition.tsv"))
+active <- inh |>
+  filter(activity_status == "YES", !is.na(CYP3A4_pIC50))
+
+# --- generate dose-response curves ---
+
+log_conc_seq <- seq(-9, -3.5, length.out = 300)
+
+curves <- active |>
+  crossing(log_conc = log_conc_seq) |>
+  mutate(
+    slope = 2^slope_log2,
+    emax_fc = 2^emax_log2fc,
+    activity = 1 + (emax_fc - 1) / (1 + 10^(slope * (-CYP3A4_pIC50 - log_conc)))
+  ) |>
+  select(compound = ocnt_batch, log_conc, activity, pIC50 = CYP3A4_pIC50) |>
+  mutate(wave = cut(pIC50, breaks = 45, lhbels = FALSE))
+
+p <- ggplot(
+  curves,
+  aes(x = log_conc, y = activity, group = compound, colour = pIC50)
+) +
+  geom_line(alpha = 0.25, linewidth = 0.5) +
+  scale_x_continuous(
+    name = bquote(Log[10] ~ concentration ~ "(M)"),
+    breaks = seq(-11, -4, by = 1),
+    labels = seq(-11, -4, by = 1)
+  ) +
+  scale_y_continuous(
+    name = "CYP3A4 activity",
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, 1)
+  ) +
+  scale_colour_scico(palette = "navia", guide = "none") +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 15)
+  ) +
+  transition_states(wave, transition_length = 1, state_length = 0.5) +
+  shadow_mark(alpha = 0.15, linewidth = 0.2)
+
+anim <- animate(
+  p,
+  nframes = 1,
+  fps = 20,
+  width = 800,
+  height = 800,
+  units = "px",
+  res = 150,
+  renderer = gifski_renderer()
+)
+
+gif_path_abs <- here::here("post/figures/banner_drc_animation.gif")
+anim_save(gif_path_abs, anim)
+
+# Display the GIF
+knitr::include_graphics("post/figures/banner_drc_animation.gif")
+```
