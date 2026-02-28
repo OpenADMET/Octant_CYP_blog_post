@@ -78,7 +78,7 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel):
 
     # main scatter
     p = bokeh_figure(
-        width=600, height=600,
+        width=520, height=520,
         x_axis_label=xlabel, y_axis_label=ylabel,
         tools="pan,wheel_zoom,box_zoom,reset,save",
         x_range=(lo, hi), y_range=(lo, hi),

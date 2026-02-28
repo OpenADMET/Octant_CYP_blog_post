@@ -1,4 +1,9 @@
+/*-- scss:defaults --*/
+$web-font-path: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@200;300;400;600;700&display=swap";
+
 /*-- scss:rules --*/
+
+b, strong { font-weight: 700; }
 
 /* ==========================================================================
    1. Typography & spacing
@@ -53,6 +58,8 @@ main li { margin-bottom: 0.4em; }
    ========================================================================== */
 
 .cell { margin-top: 2em; margin-bottom: 2em; }
+.cell-output-display,
+.cell-output { overflow: visible; }
 
 .figure-caption {
   font-size: 0.85em;
