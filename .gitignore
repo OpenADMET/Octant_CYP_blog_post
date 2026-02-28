@@ -1,3 +1,6 @@
+# Build artifacts
+.content-hash
+
 # Quarto
 /.quarto/
 _freeze/

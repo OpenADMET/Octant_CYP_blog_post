@@ -1,13 +1,11 @@
+/*-- scss:rules --*/
+
 /* ==========================================================================
    1. Typography & spacing
    ========================================================================== */
 
 :root {
   font-feature-settings: 'liga' 1, 'calt' 1;
-}
-
-@supports (font-variation-settings: normal) {
-  :root { font-family: InterVariable, sans-serif; }
 }
 
 main { line-height: 1.75; }
@@ -18,76 +16,22 @@ main ul, main ol { margin-top: 1em; margin-bottom: 1.6em; }
 main li { margin-bottom: 0.4em; }
 
 /* ==========================================================================
-   2. Header layout (title + animation grid)
+   2. Quarto title block tweaks
    ========================================================================== */
 
-main.content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2em;
-}
-
-/* Default: everything spans full width */
-main.content > * {
-  grid-column: 1 / -1;
-}
-
-/* Title and animation share a row (row 2, after the logo) */
 #title-block-header {
-  grid-column: 1;
-  grid-row: 2;
-  align-self: start;
   margin-bottom: 0;
 }
 
-main.content > .banner-animation {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: start;
-  justify-self: end;
-  width: 336px;
-  max-width: 336px;
+.quarto-title-meta {
+  margin-top: 1em;
 }
-
-main.content > .banner-animation img {
-  width: 100%;
-  height: auto;
-  max-width: 336px;
-}
-
-main.content > .banner-animation p {
-  margin: 0;
-}
-
-@media (max-width: 768px) {
-  main.content {
-    grid-template-columns: 1fr;
-  }
-
-  #title-block-header,
-  main.content > .banner-animation {
-    grid-column: 1;
-  }
-}
-
-/* ==========================================================================
-   3. Byline & date
-   ========================================================================== */
 
 .doc-authors {
   font-size: 0.95em;
   color: #666;
-  margin-top: 0.8em;
-  margin-bottom: 2em;
-  line-height: 1.6;
-  letter-spacing: 0.3px;
-}
-
-.doc-date {
-  font-size: 0.85em;
-  color: #666;
-  margin-top: 0.5em;
   margin-bottom: 1.5em;
+  line-height: 1.8;
 }
 
 .doc-version {
@@ -96,25 +40,12 @@ main.content > .banner-animation p {
   border-top: 1px solid #e0e0e0;
   padding-top: 0.8em;
   margin-top: 3em;
-}
-
-.quarto-title-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.75em;
+  justify-content: space-between;
 }
 
-.quarto-title-meta-heading {
-  margin-top: 0.5em;
-  font-weight: 600;
-  font-size: 0.9em;
-}
-
-.quarto-title-meta-contents {
-  font-size: 1em;
-  line-height: 1.6;
-  max-width: none;
-  width: 100%;
+.doc-version a {
+  color: #888;
 }
 
 /* ==========================================================================
@@ -300,19 +231,3 @@ body.toc-scrolled #TOC li:has(> a.active) > ul > li:has(> a[href^="#figure-"]) {
   pointer-events: none;
 }
 
-/* ==========================================================================
-   9. Footer
-   ========================================================================== */
-
-.site-footer {
-  text-align: right;
-  font-size: 0.82em;
-  color: #888;
-  border-top: 1px solid #e0e0e0;
-  padding: 1.5em 0 2em;
-  margin-top: 4em;
-}
-
-.site-footer a {
-  color: #888;
-}

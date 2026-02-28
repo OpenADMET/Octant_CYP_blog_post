@@ -7,6 +7,11 @@ project:
     - post/figures/banner_drc_animation.gif
 format:
   html:
+    theme:
+      - lux
+      - post/styles.css
+    grid:
+      body-width: 850px
     toc: true
     toc-location: left
     toc-expand: 2
@@ -14,12 +19,6 @@ format:
     smooth-scroll: true
     number-sections: false
     lightbox: true
-    mainfont: "Inter, sans-serif"
-    css: post/styles.css
-    include-in-header:
-      - text: |
-          <link rel="preconnect" href="https://rsms.me/">
-          <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     include-before-body:
       - text: |
           <div class="progress-header">
@@ -96,9 +95,6 @@ format:
               }).observe(document.body, { childList: true });
             });
           </script>
-          <div class="site-footer">
-            This page is built with ❤️ and <a href="https://quarto.org">Quarto</a>
-          </div>
 execute:
   warning: false
 knitr:

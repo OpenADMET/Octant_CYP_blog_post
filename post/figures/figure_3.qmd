@@ -114,7 +114,7 @@ def make_figure_3():
 
     # main scatter
     p = bokeh_figure(
-        width=650, height=500,
+        width=600, height=500,
         x_axis_label="CYP3A4 IC50",
         y_axis_label="CYP3A4 (% remaining)",
         x_axis_type="log",
