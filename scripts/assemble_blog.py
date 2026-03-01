@@ -114,7 +114,7 @@ def unwrap_google_url(url: str) -> str:
 def format_citation_link(text: str, href: str) -> str:
     """Format a citation link with hover tooltip from citations.tsv."""
     num = text.strip().strip("[]")
-    display = text.strip()
+    display = num
     tooltip = cite_tooltips.get(num, "")
     if tooltip:
         tooltip_escaped = tooltip.replace('"', "&quot;")
@@ -482,6 +482,9 @@ def apply_subscripts(text: str) -> str:
 
 
 out = [apply_subscripts(line) for line in out]
+
+# Strip brackets around citation pill badges: [<a ...>N</a>] → <a ...>N</a>
+out = [re.sub(r'\[(<a [^>]*class="cite-tip"[^>]*>\d+</a>)\]', r'\1', line) for line in out]
 
 # Collapse runs of 2+ blank lines to 1
 final: list[str] = []
