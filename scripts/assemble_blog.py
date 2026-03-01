@@ -159,9 +159,6 @@ def _wrap_bold_italic(inner: str, is_bold: bool, is_italic: bool) -> str:
 def span_to_md(element) -> str:
     """Convert a <span> element (possibly containing <a> tags) to markdown."""
     parts: list[str] = []
-    for child in element:
-        # Text before any child element
-        pass
     # lxml models text differently: element.text + each child's tail
     if element.text:
         parts.append(element.text)
@@ -223,7 +220,10 @@ def node_to_md(node) -> str:
         if child.tail:
             parts.append(child.tail)
 
-    return "".join(parts).strip()
+    result = "".join(parts).strip()
+    # Strip brackets around cite-tip links that span sibling elements
+    result = re.sub(r'\[(<a [^>]*class="cite-tip"[^>]*>\d+</a>)\]', r'\1', result)
+    return result
 
 
 def li_to_md(li_node) -> str:
@@ -258,7 +258,9 @@ def li_to_md(li_node) -> str:
         if child.tail:
             parts.append(child.tail)
 
-    return "- " + "".join(parts).strip()
+    result = "".join(parts).strip()
+    result = re.sub(r'\[(<a [^>]*class="cite-tip"[^>]*>\d+</a>)\]', r'\1', result)
+    return "- " + result
 
 
 # Abbreviations that should NOT trigger sentence splitting
@@ -534,9 +536,6 @@ def apply_subscripts(text: str) -> str:
 
 
 out = [apply_subscripts(line) for line in out]
-
-# Strip brackets around citation pill badges: [<a ...>N</a>] → <a ...>N</a>
-out = [re.sub(r'\[(<a [^>]*class="cite-tip"[^>]*>\d+</a>)\]', r'\1', line) for line in out]
 
 # Unbold inline figure references (keep bold only in caption labels like **Figure N:**)
 def _unbold_fig_refs(line: str) -> str:
