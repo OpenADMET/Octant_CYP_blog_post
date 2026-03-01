@@ -8,23 +8,20 @@ dependencies = [
     # R console (reticulate bridge)
     "radian",
     "ipython",
-
     # Data
     "numpy>=1.20.0",
     "pandas",
-
     # Chemistry (molecule structure visualization)
     "rdkit",
-
     # Interactive figures
     "bokeh",
-
     # Statistics
     "scipy",
-
     # Database access
     "databricks-sql-connector",
-
     # Argo LIMS API
     "requests",
+    "matplotlib>=3.10.8",
+    "pillow>=12.1.1",
+    "seaborn>=0.13.2",
 ]

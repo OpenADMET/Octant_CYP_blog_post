@@ -18,6 +18,7 @@ renv::init(
 )
 
 depends <- c(
+  "data.table",
   "ggbeeswarm",
   "ggh4x",
   "ggiraph",

@@ -34,6 +34,8 @@ def smiles_to_svg(smiles, size=(300, 300)):
     if mol is None:
         return ""
     drawer = rdMolDraw2D.MolDraw2DSVG(size[0], size[1])
+    opts = drawer.drawOptions()
+    opts.fixedBondLength = 25
     drawer.DrawMolecule(mol)
     drawer.FinishDrawing()
     svg_str = drawer.GetDrawingText()

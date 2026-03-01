@@ -1,0 +1,246 @@
+/*-- scss:defaults --*/
+$web-font-path: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@200;300;400;600;700&display=swap";
+
+/*-- scss:rules --*/
+
+b, strong { font-weight: 700; }
+
+/* ==========================================================================
+   1. Typography & spacing
+   ========================================================================== */
+
+:root {
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+main { line-height: 1.75; }
+main p { margin-bottom: 1.6em; }
+main h2 { margin-top: 2.5em; margin-bottom: 1em; }
+main h3 { margin-top: 2em; margin-bottom: 0.8em; }
+main ul, main ol { margin-top: 1em; margin-bottom: 1.6em; }
+main li { margin-bottom: 0.4em; }
+
+/* ==========================================================================
+   2. Quarto title block tweaks
+   ========================================================================== */
+
+#title-block-header {
+  margin-bottom: 0;
+}
+
+.quarto-title-meta {
+  margin-top: 1em;
+}
+
+.doc-authors {
+  font-size: 0.95em;
+  color: #666;
+  margin-bottom: 1.5em;
+  line-height: 1.8;
+}
+
+.doc-version {
+  font-size: 0.78em;
+  color: #888;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 0.8em;
+  margin-top: 3em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.doc-version a {
+  color: #888;
+}
+
+/* ==========================================================================
+   4. Figures & cells
+   ========================================================================== */
+
+.cell { margin-top: 2em; margin-bottom: 2em; }
+.cell-output-display,
+.cell-output { overflow: visible; }
+
+.figure-caption {
+  font-size: 0.85em;
+  color: #555;
+  line-height: 1.45;
+  margin-top: 0.5em;
+  margin-bottom: 1.5em;
+  padding-bottom: 3em;
+}
+
+.cell + .figure-caption { margin-top: 0.5em; }
+
+/* Center static images; keep widgets full-width */
+.cell-output-display > p,
+.cell-output-display > img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+/* ==========================================================================
+   5. ToC figure entries
+   ========================================================================== */
+
+/* Hide figure-toc headings in the body */
+h4.figure-toc {
+  height: 0; margin: 0; padding: 0;
+  overflow: hidden; visibility: hidden;
+}
+
+/* Style figure entries in the ToC sidebar */
+#TOC a[href^="#figure-"] {
+  color: #888;
+  font-style: italic;
+}
+
+/* Hide figure entries in ToC by default */
+#TOC li:has(> a[href^="#figure-"]) {
+  display: none;
+}
+
+/* After first scroll, show figures under the active section */
+body.toc-scrolled #TOC li:has(> a.active) > ul > li:has(> a[href^="#figure-"]) {
+  display: list-item;
+}
+
+/* Always show a figure whose own link is active */
+#TOC li:has(> a.active[href^="#figure-"]) {
+  display: list-item;
+}
+
+/* When any figure is active, show its siblings too */
+#TOC ul:has(> li > a.active[href^="#figure-"]) > li:has(> a[href^="#figure-"]) {
+  display: list-item;
+}
+
+/* ==========================================================================
+   6. Logo & progress header
+   ========================================================================== */
+
+.header-logo {
+  display: block;
+  margin: 0.5em auto 0.5em;
+  max-width: 280px;
+}
+
+.progress-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1100;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.progress-header.visible {
+  transform: translateY(0);
+}
+
+#quarto-sidebar-toc-left {
+  padding-top: 50px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#quarto-sidebar-toc-left.toc-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.progress-header-logo {
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.progress-header-title {
+  font-size: 0.82em;
+  font-weight: 600;
+  color: #333;
+  margin-left: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reading-progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #e8e8e8;
+}
+
+.reading-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #1d4ed8;
+  transition: width 0.15s linear;
+}
+
+/* ==========================================================================
+   7. ggiraph fullscreen
+   ========================================================================== */
+
+/* Reset Lux theme letter-spacing/uppercase on ggiraph SVG text */
+.ggiraph-svg text {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.ggiraph-fullscreen-content { height: auto; width: 90vw; }
+
+.ggiraph-fullscreen-content:has(.ggiraph-fullscreen-caption) {
+  flex-direction: column;
+}
+
+.ggiraph-fullscreen-caption {
+  font-size: 0.8em;
+  color: #000;
+  line-height: 1.4;
+  padding: 8px 20px 0;
+  text-align: left;
+  max-height: 15vh;
+  overflow-y: auto;
+  margin-top: auto;
+}
+
+/* ==========================================================================
+   8. Citation tooltips
+   ========================================================================== */
+
+.cite-tip { position: relative; }
+
+.cite-tip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8em;
+  line-height: 1.4;
+  white-space: normal;
+  width: max-content;
+  max-width: 350px;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+  z-index: 1000;
+  pointer-events: none;
+}
+

@@ -1,3 +1,6 @@
+# Build artifacts
+.content-hash
+
 # Quarto
 /.quarto/
 _freeze/
@@ -5,6 +8,7 @@ _freeze/
 *_cache/
 *.rmarkdown
 cyp-blog-post_files/
+post/figures/banner_drc_animation_py.gif
 
 # Otter (Neovim R plugin) hidden buffers
 *.otter.R
