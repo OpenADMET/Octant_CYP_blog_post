@@ -1,4 +1,15 @@
 ```{r}
+#| label: figure-6-setup
+#| message: false
+#| cache: false
+
+library(tidyverse)
+library(patchwork)
+library(here)
+source(here("R", "helpers.R"))
+```
+
+```{r}
 #| label: figure-6
 #| fig-width: 5
 #| fig-height: 5
@@ -6,6 +17,7 @@
 #| message: false
 #| cache: true
 
+theme_set(theme_pub(base_size = 12))
 wif <- read_tsv(here("data", "willitfly.tsv"))
 
 wif <- wif |>

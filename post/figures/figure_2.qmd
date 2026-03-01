@@ -78,13 +78,19 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel):
 
     # main scatter
     p = bokeh_figure(
-        width=500, height=500,
+        width=520, height=520,
         x_axis_label=xlabel, y_axis_label=ylabel,
         tools="pan,wheel_zoom,box_zoom,reset,save",
         x_range=(lo, hi), y_range=(lo, hi),
     )
     p.xaxis.axis_label_text_font_style = "normal"
     p.yaxis.axis_label_text_font_style = "normal"
+    p.grid.visible = False
+    p.xaxis.minor_tick_line_color = None
+    p.yaxis.minor_tick_line_color = None
+    from bokeh.models import Span
+    p.add_layout(Span(location=100, dimension="width", line_color="#aaa", line_dash="dashed", line_width=1))
+    p.add_layout(Span(location=100, dimension="height", line_color="#aaa", line_dash="dashed", line_width=1))
     p.scatter("x", "y", source=source, size=6,
               fill_alpha=0.35, line_color="white", line_width=0.5)
     p.add_tools(HoverTool(tooltips=TOOLTIPS))
@@ -127,12 +133,14 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel):
 
     layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
     script, div = components(layout)
-    return HTML(CDN.render() + div + script)
+    html = CDN.render() + div + script
+    print("```{=html}\n" + html + "\n```")
 ```
 
 ```{python}
 #| label: figure-2-plot
 #| cache: false
+#| output: asis
 
 
 marginal_scatter(

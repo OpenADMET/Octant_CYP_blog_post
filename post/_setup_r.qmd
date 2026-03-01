@@ -18,6 +18,7 @@ renv::init(
 )
 
 depends <- c(
+  "data.table",
   "ggbeeswarm",
   "ggh4x",
   "ggiraph",
@@ -27,6 +28,7 @@ depends <- c(
   "paletteer",
   "patchwork",
   "png",
+  "reticulate",
   "scico",
   "tidyverse"
 )
@@ -35,24 +37,7 @@ renv::install(depends, prompt = FALSE, dependencies = TRUE, project = wd)
 
 # snapshot dependencies
 renv::snapshot(prompt = FALSE, project = wd)
+renv::record("reticulate", project = wd)
+renv::hydrate(prompt = FALSE, project = wd)
 ```
 
-```{r}
-#| label: attach-packages
-#| cache: false
-#| message: false
-
-renv::load(project = wd)
-
-library(tidyverse)
-library(ggplot2)
-library(ggbeeswarm)
-library(ggh4x)
-library(ggiraph)
-library(ggthemes)
-library(patchwork)
-library(here)
-
-source(here("R", "helpers.R"))
-theme_set(theme_pub(base_size = 12))
-```

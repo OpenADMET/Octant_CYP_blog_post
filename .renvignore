@@ -1,5 +1,6 @@
 *.otter.*
 data/inhibition_drc-plots
+data/inhibition_drc-plots-webp
 data/raw
 _site
 .venv

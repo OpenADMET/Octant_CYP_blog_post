@@ -1,4 +1,18 @@
 ```{r}
+#| label: figure-7-setup
+#| message: false
+#| cache: false
+
+library(tidyverse)
+library(ggbeeswarm)
+library(ggh4x)
+library(ggiraph)
+library(patchwork)
+library(here)
+source(here("R", "helpers.R"))
+```
+
+```{r}
 #| label: figure-7
 #| cache: false
 #| message: false

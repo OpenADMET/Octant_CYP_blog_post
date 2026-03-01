@@ -40,12 +40,6 @@ quarto render --profile notebook
 
 Output: `_site/notebook/index.html`
 
-To preview the blog version without quarto, serve the `_site/` directory:
-
-```bash
-cd _site && python -m http.server 8000
-```
-
 ## Protocols
 
 Experimental protocols used to generate the datasets in this blog post:
