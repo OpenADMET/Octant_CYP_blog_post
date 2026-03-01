@@ -486,6 +486,16 @@ out = [apply_subscripts(line) for line in out]
 # Strip brackets around citation pill badges: [<a ...>N</a>] → <a ...>N</a>
 out = [re.sub(r'\[(<a [^>]*class="cite-tip"[^>]*>\d+</a>)\]', r'\1', line) for line in out]
 
+# Unbold inline figure references (keep bold only in caption labels like **Figure N:**)
+def _unbold_fig_refs(line: str) -> str:
+    line = re.sub(r'\*\*\((Fig\s+\d[^)]*)\)\*\*', r'(\1)', line)  # **(Fig N)**
+    line = re.sub(r'\(\*\*(Fig\s+\d[^)]*)\*\*\)', r'(\1)', line)  # (**Fig N**)
+    line = re.sub(r'\(\*\*(Fig\s+\d[^)]*)\)\*\*', r'(\1)', line)  # (**Fig N)**
+    line = re.sub(r'\*\*(Fig\s+\d[A-Za-z0-9,\s]*)\*\*', r'\1', line)  # **Fig N**
+    return line
+
+out = [_unbold_fig_refs(line) for line in out]
+
 # Collapse runs of 2+ blank lines to 1
 final: list[str] = []
 blank_count = 0
