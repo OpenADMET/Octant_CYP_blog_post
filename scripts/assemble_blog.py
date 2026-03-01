@@ -40,11 +40,11 @@ format:
 
 AUTHOR_LINE = (
     ":::{.doc-authors}\n"
-    "Robert Warneford-Thomson [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4521-0568), "
-    "Steven Edgar, "
-    "Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457), "
-    "Naomi Handly [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0007-1480-6741), "
-    "Pat Walters [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0003-2860-7958), "
+    "Robert Warneford-Thomson [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4521-0568),\n"
+    "Steven Edgar,\n"
+    "Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457),\n"
+    "Naomi Handly [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0007-1480-6741),\n"
+    "Pat Walters [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0003-2860-7958),\n"
     "Sri Kosuri [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4661-0600)"
     "\n:::"
 )
@@ -317,6 +317,58 @@ def _split_sentences(text: str) -> str:
     return "\n".join(out_parts)
 
 
+MAX_LINE_LENGTH = 120
+
+
+def soft_wrap(text: str, width: int = MAX_LINE_LENGTH) -> str:
+    """Wrap long lines at word boundaries, preserving markdown links and HTML tags.
+
+    Applies per-line after sentence splitting. Doesn't break inside:
+      - markdown links  [text](url)
+      - HTML tags        <a href="...">...</a>
+      - Quarto shortcodes {{< ... >}}
+    """
+    lines = text.split("\n")
+    wrapped: list[str] = []
+    for line in lines:
+        if len(line) <= width:
+            wrapped.append(line)
+            continue
+        # Don't wrap lines that are entirely a fenced div, include, or code
+        if re.match(r"^(:::|```|\{\{<)", line):
+            wrapped.append(line)
+            continue
+        wrapped.append(_wrap_line(line, width))
+    return "\n".join(wrapped)
+
+
+def _wrap_line(line: str, width: int) -> str:
+    """Break a single long line at word boundaries, avoiding splits inside tokens."""
+    # Tokenize into atomic chunks that shouldn't be split:
+    #   markdown links [...](...), HTML tags <...>, shortcodes {{<...>}}, or words
+    token_re = re.compile(
+        r"\[.*?\]\(.*?\)"       # markdown links
+        r"|<[^>]+>"             # HTML tags
+        r"|\{\{<.*?>}}"        # Quarto shortcodes
+        r"|\S+"                 # words / punctuation
+    )
+    tokens = token_re.findall(line)
+
+    result_lines: list[str] = []
+    current = ""
+    for token in tokens:
+        candidate = (current + " " + token) if current else token
+        if len(candidate) <= width or not current:
+            # Accept even if over width when current is empty (single token > width)
+            current = candidate
+        else:
+            result_lines.append(current)
+            current = token
+    if current:
+        result_lines.append(current)
+    return "\n".join(result_lines)
+
+
 # ---------------------------------------------------------------------------
 # Parse HTML body into markdown lines
 # ---------------------------------------------------------------------------
@@ -410,7 +462,7 @@ while i < len(children):
         md = re.sub(r"^\*\*(Figure \d+:)\*\*", r"**\1**", md)
         if not md.startswith("**Figure"):
             md = re.sub(r"^(Figure \d+:)", r"**\1**", md)
-        md = one_sentence_per_line(md)
+        md = soft_wrap(one_sentence_per_line(md))
         out.extend([":::{.figure-caption}", md, ":::", ""])
         i += 1
         continue
@@ -429,7 +481,7 @@ while i < len(children):
         items = node.findall(".//li")
         out.append("")
         for li in items:
-            out.append(li_to_md(li))
+            out.append(soft_wrap(li_to_md(li)))
         out.append("")
         i += 1
         continue
@@ -442,7 +494,7 @@ while i < len(children):
         if md.startswith("Note:"):
             md = f"*{md}*"
 
-        md = one_sentence_per_line(md)
+        md = soft_wrap(one_sentence_per_line(md))
         out.extend([md, ""])
         i += 1
         continue
