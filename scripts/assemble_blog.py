@@ -40,12 +40,12 @@ format:
 
 AUTHOR_LINE = (
     ":::{.doc-authors}\n"
-    "[Robert Warneford-Thomson](https://orcid.org/0000-0002-4521-0568) {{< ai orcid color=#a6ce39 >}}, "
+    "Robert Warneford-Thomson [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4521-0568), "
     "Steven Edgar, "
-    "[Hugo MacDermott-Opeskin](https://orcid.org/0000-0002-7393-7457) {{< ai orcid color=#a6ce39 >}}, "
-    "[Naomi Handly](https://orcid.org/0009-0007-1480-6741) {{< ai orcid color=#a6ce39 >}}, "
-    "[Pat Walters](https://orcid.org/0000-0003-2860-7958) {{< ai orcid color=#a6ce39 >}}, "
-    "[Sri Kosuri](https://orcid.org/0000-0002-4661-0600) {{< ai orcid color=#a6ce39 >}}"
+    "Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457), "
+    "Naomi Handly [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0007-1480-6741), "
+    "Pat Walters [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0003-2860-7958), "
+    "Sri Kosuri [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4661-0600)"
     "\n:::"
 )
 
@@ -550,7 +550,7 @@ qmd = (
     [YAML_HEADER, ""]
     + SETUP_INCLUDES
     + ["", AUTHOR_LINE, ""]
-    + ["{{< include post/figures/banner_drc_animation_py.qmd >}}", ""]
+    + ["{{< include post/figures/banner_drc_animation.qmd >}}", ""]
     + final
     + ["", ""]
     + version_tag
