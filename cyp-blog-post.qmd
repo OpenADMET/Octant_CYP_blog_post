@@ -4,6 +4,17 @@ date: "March 2, 2026"
 format:
   html:
     output-file: index.html
+    include-in-header:
+      - text: |
+          <meta property="og:title" content="Building the OpenADMET Data Engine" />
+          <meta property="og:description" content="Interactive data release for the OpenADMET Octant CYP inhibition and reaction phenotyping dataset." />
+          <meta property="og:image" content="https://openadmet.org/Octant_CYP_blog_post/post/assets/og-preview.png" />
+          <meta property="og:url" content="https://openadmet.org/Octant_CYP_blog_post/" />
+          <meta property="og:type" content="article" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="Building the OpenADMET Data Engine" />
+          <meta name="twitter:description" content="Interactive data release for the OpenADMET Octant CYP inhibition and reaction phenotyping dataset." />
+          <meta name="twitter:image" content="https://openadmet.org/Octant_CYP_blog_post/post/assets/og-preview.png" />
 ---
 
 {{< include post/_setup_r.qmd >}}

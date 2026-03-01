@@ -29,13 +29,32 @@ assert (REPO_ROOT / ".here").exists(), f"Cannot find .here marker in {REPO_ROOT}
 # Configuration
 # ---------------------------------------------------------------------------
 
-YAML_HEADER = """\
+SITE_URL = "https://openadmet.org/Octant_CYP_blog_post"
+OG_IMAGE = f"{SITE_URL}/post/assets/og-preview.png"
+OG_TITLE = "Building the OpenADMET Data Engine"
+OG_DESCRIPTION = (
+    "Interactive data release for the OpenADMET Octant CYP inhibition "
+    "and reaction phenotyping dataset."
+)
+
+YAML_HEADER = f"""\
 ---
-title: "Building the OpenADMET Data Engine"
+title: "{OG_TITLE}"
 date: "March 2, 2026"
 format:
   html:
     output-file: index.html
+    include-in-header:
+      - text: |
+          <meta property="og:title" content="{OG_TITLE}" />
+          <meta property="og:description" content="{OG_DESCRIPTION}" />
+          <meta property="og:image" content="{OG_IMAGE}" />
+          <meta property="og:url" content="{SITE_URL}/" />
+          <meta property="og:type" content="article" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="{OG_TITLE}" />
+          <meta name="twitter:description" content="{OG_DESCRIPTION}" />
+          <meta name="twitter:image" content="{OG_IMAGE}" />
 ---"""
 
 AUTHOR_LINE = (
