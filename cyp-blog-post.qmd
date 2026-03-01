@@ -14,7 +14,7 @@ format:
 [Robert Warneford-Thomson](https://orcid.org/0000-0002-4521-0568) {{< ai orcid color=#a6ce39 >}}, Steven Edgar, [Hugo MacDermott-Opeskin](https://orcid.org/0000-0002-7393-7457) {{< ai orcid color=#a6ce39 >}}, Naomi Handly, [Pat Walters](https://orcid.org/0000-0003-2860-7958) {{< ai orcid color=#a6ce39 >}}, [Sri Kosuri](https://orcid.org/0000-0002-4661-0600) {{< ai orcid color=#a6ce39 >}}
 :::
 
-{{< include post/figures/banner_drc_animation.qmd >}}
+{{< include post/figures/banner_drc_animation_py.qmd >}}
 
 For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we are an open-science consortium dedicated to building predictive models of safety and toxicity for small molecules to improve humanity’s ability to more reliably, cheaply, and effectively treat disease.
 We aim to achieve this by developing new assays, datasets, benchmarks, and competitions for ADMET, much as CASP did for protein folding [<a href="https://doi.org/10.1002/prot.26617" class="cite-tip" data-tooltip="Kryshtafovych, A.; Schwede, T.; Topf, M. et al. (2023). Critical assessment of methods of protein structure prediction ( CASP )—Round XV. Proteins: Structure, Function, and Bioinformatics.">1</a>].
@@ -33,7 +33,7 @@ We are hoping you, the community, can help us improve, and are looking for some 
 
 ## Our first data release
 
-In this post, we are releasing a preview of our first datasets generated at Octant for OpenADMET: **CYP inhibition and reaction phenotyping. **
+In this post, we are releasing a preview of our first datasets generated at Octant for OpenADMET: **CYP inhibition and reaction phenotyping.**
 
 We prioritized metabolism assays because they are among the most critical determinants of both a drug’s exposure and ADMET liabilities.
 Cytochrome P450 (CYP) enzymes are the workhorses of phase I drug metabolism [<a href="https://doi.org/10.1016/j.pharmthera.2012.12.007" class="cite-tip" data-tooltip="Zanger, U.; Schwab, M. (2013). Cytochrome P450 enzymes in drug metabolism: Regulation of gene expression, enzyme activities, and impact of genetic variation. Pharmacology & Therapeutics.">3</a>], driving the oxidation of nonpolar xenobiotics into polar intermediates.
@@ -277,7 +277,7 @@ As our datasets grow, we will launch a blind challenge with over 20,000 CYP reac
 
 ## Acknowledgements
 
-The authors would like to acknowledge experimental data, analysis and scientific input contributed by Ana Lindahl, Scott Simpkins, Lauren Orr and Ayesha Ghazali for this blog post.
+The authors would like to acknowledge experimental data, analysis and scientific input contributed by **Ana Lindahl**, **Scott Simpkins**,** Lauren Orr** and **Ayesha Ghazali** for this blog post.
 
 This work was supported by funding from ARPA-H and the Astera Foundation.
 

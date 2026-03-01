@@ -4,7 +4,7 @@ project:
     - cyp-blog-post.qmd
   resources:
     - post/assets/openadmet-logo.png
-    - post/figures/banner_drc_animation.gif
+    - post/figures/banner_drc_animation_py.gif
 format:
   html:
     theme:

@@ -21,4 +21,7 @@ dependencies = [
     "databricks-sql-connector",
     # Argo LIMS API
     "requests",
+    "matplotlib>=3.10.8",
+    "pillow>=12.1.1",
+    "seaborn>=0.13.2",
 ]

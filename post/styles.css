@@ -124,7 +124,7 @@ body.toc-scrolled #TOC li:has(> a.active) > ul > li:has(> a[href^="#figure-"]) {
 
 .header-logo {
   display: block;
-  margin: 1.5em auto 0.5em;
+  margin: 0.5em auto 0.5em;
   max-width: 280px;
 }
 
@@ -194,6 +194,12 @@ body.toc-scrolled #TOC li:has(> a.active) > ul > li:has(> a[href^="#figure-"]) {
 /* ==========================================================================
    7. ggiraph fullscreen
    ========================================================================== */
+
+/* Reset Lux theme letter-spacing/uppercase on ggiraph SVG text */
+.ggiraph-svg text {
+  letter-spacing: normal;
+  text-transform: none;
+}
 
 .ggiraph-fullscreen-content { height: auto; width: 90vw; }
 

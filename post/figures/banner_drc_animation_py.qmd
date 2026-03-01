@@ -1,0 +1,232 @@
+```{python}
+#| label: banner-drc-animation-py
+#| cache: true
+#| echo: false
+#| output: asis
+#| message: false
+#| warning: false
+
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import seaborn  # registers mako colormap
+from matplotlib.collections import LineCollection
+from PIL import Image
+from rdkit import Chem
+from rdkit.Chem.Draw import rdMolDraw2D
+
+repo_root = Path(os.environ["REPO_ROOT"])
+
+# ==========================================================================
+# Configuration — adjust these to control the animation
+# ==========================================================================
+
+n_frames = 150         # total animation frames (also sets number of molecules)
+fps = 50              # playback speed
+pause_frames = 15     # blank frames before the animation starts
+
+# ==========================================================================
+
+# --- load inhibition data and filter active compounds ---
+
+inh = pd.read_csv(repo_root / "data" / "inhibition.tsv", sep="\t")
+active = inh[(inh["activity_status"] == "YES") & inh["CYP3A4_pIC50"].notna()].copy()
+
+# --- generate dose-response curves ---
+
+log_conc = np.linspace(-9, -3.5, 300)
+
+# number of waves = number of animation frames (one wave revealed per frame)
+n_waves = n_frames
+
+active = active.sort_values("CYP3A4_pIC50").reset_index(drop=True)
+active["wave"] = pd.qcut(active.index, n_waves, labels=False) + 1
+
+# compute curves for all compounds
+slopes = (2 ** active["slope_log2"].values)[:, None]
+emax_fc = (2 ** active["emax_log2fc"].values)[:, None]
+pic50 = active["CYP3A4_pIC50"].values[:, None]
+
+activity = 1 + (emax_fc - 1) / (1 + 10 ** (slopes * (-pic50 - log_conc[None, :])))
+
+# --- colourmap (mako from seaborn/matplotlib) ---
+
+try:
+    cmap = plt.get_cmap("mako")
+except ValueError:
+    cmap = plt.get_cmap("viridis")
+
+pic50_flat = active["CYP3A4_pIC50"].values
+norm = plt.Normalize(pic50_flat.min(), pic50_flat.max())
+colors = cmap(norm(pic50_flat))
+
+# --- rendering parameters ---
+
+width_px, height_px = 800, 450
+dpi = 120
+fig_w = width_px / dpi
+fig_h = height_px / dpi
+
+waves = active["wave"].values
+
+# --- pre-render molecule structures with fixed bond length ---
+
+# one molecule per animation frame, evenly sampled across the pIC50 range
+sample_idx = np.linspace(0, len(active) - 1, n_frames, dtype=int)
+sample_smiles = active.iloc[sample_idx]["standardized_smiles"].values
+
+mol_canvas_size = (250, 250)
+
+
+def render_mol_fixed_bond(smiles, canvas_w, canvas_h):
+    """Render molecule with fixed bond length, centered on transparent canvas."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+
+    drawer = rdMolDraw2D.MolDraw2DCairo(canvas_w, canvas_h)
+    opts = drawer.drawOptions()
+    opts.fixedBondLength = 20
+    opts.padding = 0.15
+    opts.bondLineWidth = 1.5
+    opts.clearBackground = False  # transparent
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+
+    png_data = drawer.GetDrawingText()
+    from io import BytesIO
+    return Image.open(BytesIO(png_data)).convert("RGBA")
+
+
+mol_images = [render_mol_fixed_bond(s, *mol_canvas_size) for s in sample_smiles]
+
+# --- render static base frame (axes only) and get plot area bbox ---
+
+
+def make_figure():
+    """Create a figure with styled axes, return (fig, ax)."""
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
+    ax.set_xlim(-9.5, -3.0)
+    ax.set_ylim(0, 1)
+    ax.set_xticks(range(-9, -3))
+    ax.set_xticklabels(range(-9, -3))
+    ax.set_xlabel(r"$\log_{10}$ concentration (M)")
+    ax.set_ylabel("CYP3A4 activity")
+    ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.set_yticklabels(["0%", "25%", "50%", "75%", "100%"])
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_linewidth(0.5)
+    ax.spines["bottom"].set_linewidth(0.5)
+    ax.tick_params(length=0, pad=4)
+    fig.tight_layout(pad=0.5)
+    return fig, ax
+
+
+def fig_to_image(fig):
+    """Render figure to PIL Image."""
+    fig.canvas.draw()
+    return Image.frombytes(
+        "RGBA",
+        fig.canvas.get_width_height(),
+        fig.canvas.buffer_rgba(),  # type: ignore[arg-type]
+    )
+
+
+# render base frame and determine the plot area bounding box in pixels
+base_fig, base_ax = make_figure()
+base_fig.canvas.draw()
+bbox = base_ax.get_window_extent().transformed(base_fig.dpi_scale_trans.inverted())
+# convert to pixel coordinates (origin top-left for PIL)
+plot_left = int(bbox.x0 * dpi)
+plot_right = int(bbox.x1 * dpi)
+plot_top = int((fig_h - bbox.y1) * dpi)  # flip y: matplotlib origin is bottom-left
+plot_bottom = int((fig_h - bbox.y0) * dpi)
+plot_box = (plot_left, plot_top, plot_right, plot_bottom)
+
+base_img = fig_to_image(base_fig).convert("RGB")
+plt.close(base_fig)
+
+# --- render animated plot interiors only ---
+
+
+def render_plot_interior(anim_frame):
+    """Render curves + molecule for one frame, return cropped plot area as RGBA."""
+    fig, ax = make_figure()
+
+    # wave index: each animation frame reveals one wave
+    current_wave = anim_frame + 1
+
+    for wi in range(1, current_wave + 1):
+        mask = waves == wi
+
+        if wi < current_wave:
+            alpha = 0.15
+            lw = 0.8 * (72 / dpi)
+        else:
+            alpha = 0.25
+            lw = 0.8 * (72 / dpi)
+
+        idxs = np.where(mask)[0]
+        for i in idxs:
+            ax.plot(
+                log_conc,
+                activity[i],
+                color=colors[i],
+                alpha=alpha,
+                linewidth=lw,
+                solid_capstyle="round",
+            )
+
+    # overlay molecule structure in bottom-left
+    mol_img = mol_images[anim_frame]
+    img_arr = np.array(mol_img, dtype=np.float32) / 255.0
+    ax.imshow(
+        img_arr,
+        extent=[-9.5, -7.0, 0.0, 0.5],
+        aspect="auto",
+        zorder=10,
+        interpolation="antialiased",
+    )
+
+    full_img = fig_to_image(fig)
+    plt.close(fig)
+
+    # crop just the plot interior
+    return full_img.crop(plot_box)
+
+
+# --- composite frames: static base + animated interior ---
+
+frames = []
+
+# pause frames: just the static base
+for _ in range(pause_frames):
+    frames.append(base_img.copy())
+
+# animation frames: paste plot interior onto base
+for fi in range(n_frames):
+    interior = render_plot_interior(fi)
+    frame = base_img.copy()
+    frame.paste(interior.convert("RGB"), (plot_left, plot_top))
+    frames.append(frame)
+
+# --- save optimized GIF ---
+
+# quantize to 128 colors for smaller file size
+quantized = [f.quantize(colors=128, method=Image.Quantize.MEDIANCUT) for f in frames]
+
+gif_path = repo_root / "post" / "figures" / "banner_drc_animation_py.gif"
+quantized[0].save(
+    gif_path,
+    save_all=True,
+    append_images=quantized[1:],
+    duration=int(1000 / fps),
+    loop=0,
+    optimize=True,
+)
+
+print(f"![](post/figures/banner_drc_animation_py.gif)")
+```
