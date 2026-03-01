@@ -1,5 +1,5 @@
 ```{python}
-#| label: banner-drc-animation-py
+#| label: banner-drc-animation
 #| cache: true
 #| echo: false
 #| output: asis
@@ -64,8 +64,8 @@ colors = cmap(norm(pic50_flat))
 
 # --- rendering parameters ---
 
-width_px, height_px = 800, 450
-dpi = 120
+width_px, height_px = 1600, 900
+dpi = 240
 fig_w = width_px / dpi
 fig_h = height_px / dpi
 
@@ -213,20 +213,30 @@ for fi in range(n_frames):
     frame.paste(interior.convert("RGB"), (plot_left, plot_top))
     frames.append(frame)
 
-# --- save optimized GIF ---
+# --- save as MP4 video ---
 
-# quantize to 128 colors for smaller file size
-quantized = [f.quantize(colors=128, method=Image.Quantize.MEDIANCUT) for f in frames]
+import imageio.v3 as iio
 
-gif_path = repo_root / "post" / "figures" / "banner_drc_animation_py.gif"
-quantized[0].save(
-    gif_path,
-    save_all=True,
-    append_images=quantized[1:],
-    duration=int(1000 / fps),
-    loop=0,
-    optimize=True,
+mp4_path = repo_root / "post" / "figures" / "banner_drc_animation.mp4"
+
+# convert PIL Images to numpy arrays
+frame_arrays = [np.array(f) for f in frames]
+
+iio.imwrite(
+    mp4_path,
+    frame_arrays,
+    fps=fps,
+    codec="libx264",
+    plugin="pyav",
+    in_pixel_format="rgb24",
 )
 
-print(f"![](post/figures/banner_drc_animation_py.gif)")
+print(
+    "```{=html}\n"
+    '<video autoplay loop muted playsinline '
+    'style="width:100%; max-width:800px; display:block; margin:0 auto;">'
+    '<source src="post/figures/banner_drc_animation.mp4" type="video/mp4">'
+    '</video>\n'
+    "```"
+)
 ```
