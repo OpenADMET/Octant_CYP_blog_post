@@ -25,17 +25,16 @@ For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we 
 dedicated to building predictive models of safety and toxicity for small molecules to improve humanity’s ability to more
 reliably, cheaply, and effectively treat disease.
 We aim to achieve this by developing new assays, datasets, benchmarks, and competitions for ADMET, much as
-CASP did for protein folding <a href="https://doi.org/10.1002/prot.26617" class="cite-tip" data-tooltip="Kryshtafovych,
-A.; Schwede, T.; Topf, M. et al. (2023). Critical assessment of methods of protein structure prediction ( CASP )—Round
-XV. Proteins: Structure, Function, and Bioinformatics.">1</a>.
+CASP did for protein folding
+<a href="https://doi.org/10.1002/prot.26617" class="cite-tip" data-tooltip="Kryshtafovych, A.; Schwede, T.; Topf, M. et al. (2023). Critical assessment of methods of protein structure prediction ( CASP )—Round XV. Proteins: Structure, Function, and Bioinformatics.">
+1</a>.
 
 Our recent
 [ExpansionRx Challenge](https://openadmet.ghost.io/lessons-learned-from-the-openadmet-expansionrx-blind-challenge/)
 highlighted a critical gap: among 370 participants, the top four winners relied on proprietary data.
-This is not surprising as public ADMET datasets are sparse, poorly documented/controlled, noisy, and contradictory [<a
-href="https://doi.org/10.1021/acs.jcim.4c00049" class="cite-tip" data-tooltip="Landrum, G.; Riniker, S. (2024).
-Combining IC 50 or K i Values from Different Sources Is a Source of Significant Noise. Journal of Chemical Information
-and Modeling.">2</a>].
+This is not surprising as public ADMET datasets are sparse, poorly documented/controlled, noisy, and contradictory
+<a href="https://doi.org/10.1021/acs.jcim.4c00049" class="cite-tip" data-tooltip="Landrum, G.; Riniker, S. (2024). Combining IC 50 or K i Values from Different Sources Is a Source of Significant Noise. Journal of Chemical Information and Modeling.">
+2</a>.
 Worse, the decisions made during data generation are often opaque or explicitly hidden.
 This creates a "black box" in which ML practitioners must guess the quality, context, and limitations of the inputs,
 which means combining data from mismatched assay sources often degrades performance rather than improve it.
@@ -58,15 +57,13 @@ reaction phenotyping.**
 
 We prioritized metabolism assays because they are among the most critical determinants of both a drug’s exposure and
 ADMET liabilities.
-Cytochrome P450 (CYP) enzymes are the workhorses of phase I drug metabolism [<a
-href="https://doi.org/10.1016/j.pharmthera.2012.12.007" class="cite-tip" data-tooltip="Zanger, U.; Schwab, M. (2013).
-Cytochrome P450 enzymes in drug metabolism: Regulation of gene expression, enzyme activities, and impact of genetic
-variation. Pharmacology & Therapeutics.">3</a>], driving the oxidation of nonpolar xenobiotics into polar intermediates.
+Cytochrome P450 (CYP) enzymes are the workhorses of phase I drug metabolism
+<a href="https://doi.org/10.1016/j.pharmthera.2012.12.007" class="cite-tip" data-tooltip="Zanger, U.; Schwab, M. (2013). Cytochrome P450 enzymes in drug metabolism: Regulation of gene expression, enzyme activities, and impact of genetic variation. Pharmacology & Therapeutics.">
+3</a>, driving the oxidation of nonpolar xenobiotics into polar intermediates.
 Consequently, CYP inhibition is a major driver of drug-drug interactions (DDIs) and is intimately linked to complex,
-interrelated metabolic phenomena (e.g., PXR induction of CYP3A4 <a href="https://doi.org/10.1172/jci3703"
-class="cite-tip" data-tooltip="Lehmann, J.; McKee, D.; Watson, M. et al. (1998). The human orphan nuclear receptor PXR
-is activated by compounds that regulate CYP3A4 gene expression and cause drug interactions. Journal of Clinical
-Investigation.">4</a>).
+interrelated metabolic phenomena (e.g., PXR induction of CYP3A4
+<a href="https://doi.org/10.1172/jci3703" class="cite-tip" data-tooltip="Lehmann, J.; McKee, D.; Watson, M. et al. (1998). The human orphan nuclear receptor PXR is activated by compounds that regulate CYP3A4 gene expression and cause drug interactions. Journal of Clinical Investigation.">
+4</a>).
 
 To validate our data generation platform, we screened approximately 1,200 compounds for both CYP reactivity (CYP2J2 and
 CYP3A4) and CYP inhibition (CYP3A4).
@@ -178,15 +175,15 @@ Watch for an announcement in the next 2 weeks for an OpenADMET challenge using O
 
 To reliably model CYP-mediated clearance and drug-drug interactions (DDI), we must understand both how a drug inhibits
 enzymes and how it is metabolized by them, including the complex feedback loops between the two (e.g., time-dependent
-inhibition <a href="https://doi.org/10.1517/17425255.3.1.51" class="cite-tip" data-tooltip="Riley, R.; Grime, K.;
-Weaver, R. (2007). Time-dependent CYP inhibition. Expert Opinion on Drug Metabolism & Toxicology.">5</a>).
+inhibition
+<a href="https://doi.org/10.1517/17425255.3.1.51" class="cite-tip" data-tooltip="Riley, R.; Grime, K.; Weaver, R. (2007). Time-dependent CYP inhibition. Expert Opinion on Drug Metabolism & Toxicology.">
+5</a>).
 We are building datasets to cover the seven most common CYP isoforms (CYP1A2, CYP2B6, CYP2C8, CYP2C9, CYP2C19, CYP2D6,
 and CYP3A4), starting with CYP3A4.
 We also prioritized CYP2J2 early in development as a proof of concept, given its role in extra-hepatic clearance,
-growing awareness of its importance in drug-induced cardiotoxicity [<a
-href="https://www.doi.org/10.1016/j.ejps.2023.106475" class="cite-tip" data-tooltip="Leow, J.; Gu, Y.; Chan, E. (2023).
-Investigating the relevance of CYP2J2 inhibition for drugs known to cause intermediate to high risk torsades de pointes.
-European Journal of Pharmaceutical Sciences.">6</a>], and the relative paucity of public data.
+growing awareness of its importance in drug-induced cardiotoxicity
+<a href="https://www.doi.org/10.1016/j.ejps.2023.106475" class="cite-tip" data-tooltip="Leow, J.; Gu, Y.; Chan, E. (2023). Investigating the relevance of CYP2J2 inhibition for drugs known to cause intermediate to high risk torsades de pointes. European Journal of Pharmaceutical Sciences.">
+6</a>, and the relative paucity of public data.
 
 Assay development is a multiparameter optimization problem.
 Designing experimental cascades that capture high-quality ADMET data at scale requires balancing the inherent tension
@@ -198,17 +195,16 @@ The challenge is to maximize scientific value while minimizing that overhead.
 
 Generating data at a scale useful for machine learning requires a radical shift in economics.
 Machine learning is inherently data-hungry, and the loss curve, which describes model error as a function of data
-collected, is steepest at the beginning <a href="https://doi.org/10.48550/arXiv.1712.00409" class="cite-tip"
-data-tooltip="Hestness, J.; Narang, S.; Ardalani, N. et al. (2017). Deep Learning Scaling is Predictable,
-Empirically.">7</a>: scaling from hundreds to tens of thousands of data points provides significant gains in model
-performance.
+collected, is steepest at the beginning
+<a href="https://doi.org/10.48550/arXiv.1712.00409" class="cite-tip" data-tooltip="Hestness, J.; Narang, S.; Ardalani, N. et al. (2017). Deep Learning Scaling is Predictable, Empirically.">
+7</a>: scaling from hundreds to tens of thousands of data points provides significant gains in model performance.
 
 Standard CRO assays, however, are designed for **lead optimization** where chemists refine a focused series and are
 willing to pay a premium for a handful of data points.
-But systematically surveying the **"avoidome"** <a href="https://www.doi.org/10.1016/j.cell.2024.01.003"
-class="cite-tip" data-tooltip="Fraser, J.; Murcko, M. (2024). Structure is beauty, but not always truth. Cell.">8</a>
-(the vast chemical space of molecules that interact with antitargets) requires thousands of assay-compound pairs for
-each target.
+But systematically surveying the **"avoidome"**
+<a href="https://www.doi.org/10.1016/j.cell.2024.01.003" class="cite-tip" data-tooltip="Fraser, J.; Murcko, M. (2024). Structure is beauty, but not always truth. Cell.">
+8</a> (the vast chemical space of molecules that interact with antitargets) requires thousands of assay-compound pairs
+for each target.
 At standard CRO prices, this is a non-starter.
 To make this tractable, we set a target of reducing the cost per data point by 100x.
 
@@ -222,9 +218,9 @@ miniaturized the assay to a **4 µL, 1536-well format**. This reduced reagent co
 scale assay, and increased our throughput 4-fold.
 - **For Metabolism (Reaction Phenotyping):** Measuring depletion requires label-free detection, typically via LC-MS.
 Standard LC-MS is slow (minutes per sample). To bypass this bottleneck, we leveraged acoustic ejection mass spectrometry
-using a SCIEX Echo MS+ <a href="https://doi.org/10.1021/acs.analchem.1c01137" class="cite-tip" data-tooltip="Zhang, H.;
-Liu, C.; Hua, W. et al. (2021). Acoustic Ejection Mass Spectrometry for High-Throughput Analysis. Analytical
-Chemistry.">9</a>, which allows for contactless sampling directly from assay plates on the sub-2 second timescale
+using a SCIEX Echo MS+
+<a href="https://doi.org/10.1021/acs.analchem.1c01137" class="cite-tip" data-tooltip="Zhang, H.; Liu, C.; Hua, W. et al. (2021). Acoustic Ejection Mass Spectrometry for High-Throughput Analysis. Analytical Chemistry.">
+9</a>, which allows for contactless sampling directly from assay plates on the sub-2 second timescale
 <a href="https://sciex.com/content/dam/SCIEX/pdf/tech-notes/pharma/MKT-35763-A_Accelerating_ADME_workflows_AEMS_for_high-throughput_metabolic_stability_studies_Final.pdf" class="cite-tip" data-tooltip="Haupt, L.; Bhalkikar, A.; Horkman, J. et al. Accelerating ADME workflows: AEMS for high-throughput metabolic stability studies, SCIEX technical note, MKT-35763-A.">
 10</a>. With this approach, we developed a 2 µL, 1536-well metabolism assay for the Echo-MS at a cost comparable to our
 CYP inhibition assay.
