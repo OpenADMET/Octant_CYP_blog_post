@@ -133,12 +133,14 @@ def marginal_scatter(df, xcol, ycol, xlabel, ylabel):
 
     layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
     script, div = components(layout)
-    return HTML(CDN.render() + div + script)
+    html = CDN.render() + div + script
+    print("```{=html}\n" + html + "\n```")
 ```
 
 ```{python}
 #| label: figure-2-plot
 #| cache: false
+#| output: asis
 
 
 marginal_scatter(

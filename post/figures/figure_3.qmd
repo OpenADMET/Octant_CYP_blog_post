@@ -93,6 +93,7 @@ ic50_react["swarm_img"] = ic50_react["ocnt_batch"].map(
 ```{python}
 #| label: figure-3-plot
 #| cache: false
+#| output: asis
 
 def make_figure_3():
     x = ic50_react["IC50_M"].values
@@ -204,7 +205,8 @@ def make_figure_3():
 
     layout = gridplot([[ph, None], [p, pv]], merge_tools=False)
     script, div = components(layout)
-    return HTML(CDN.render() + div + script)
+    html = CDN.render() + div + script
+    print("```{=html}\n" + html + "\n```")
 
 make_figure_3()
 ```
