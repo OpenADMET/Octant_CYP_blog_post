@@ -72,7 +72,7 @@ FIGURE_INCLUDES = {
     "2": "{{< include post/figures/figure_2.qmd >}}",
     "3": "{{< include post/figures/figure_3.qmd >}}",
     "4": "{{< include post/figures/figure_4.qmd >}}",
-    "5": "![](post/Figure_5.png)",
+    "5": "![](post/Figure_5.webp)",
     "6": "{{< include post/figures/figure_6.qmd >}}",
     "7": "{{< include post/figures/figure_7.qmd >}}",
 }
