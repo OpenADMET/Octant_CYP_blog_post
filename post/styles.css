@@ -1,5 +1,5 @@
 /*-- scss:defaults --*/
-$web-font-path: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@200;300;400;600;700&display=swap";
+$web-font-path: "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap";
 
 /*-- scss:rules --*/
 
@@ -11,6 +11,12 @@ b, strong { font-weight: 700; }
 
 :root {
   font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+body {
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 main a { text-decoration: none; font-weight: 700; color: #1e3a8a; }
