@@ -86,7 +86,7 @@ Details of our design decisions are provided in the sections below, and a snapsh
 and 3.
 While this is just a teaser dataset in anticipation of a future blind challenge, it is, to our knowledge, one of the
 largest publicly-available internally consistent CYP datasets.
-The full dataset is available on **[GitHub](https://github.com/OpenADMET/Octant_CYP_blog_post)** and includes the
+The full dataset is available on **[GitHub](https://github.com/OpenADMET/Octant_CYP_blog_post)** and **[HuggingFace](https://huggingface.co/datasets/openadmet/Octant_CYP_inhibition_reactivity_blog_release)** and includes the
 following:
 
 **Dataset 1: CYP Reaction Phenotyping**
@@ -177,7 +177,7 @@ Hover to view molecular structure, raw peak area swarm plot, and dose-response c
 
 The following sections detail the specific trade-offs we faced in building these assays.
 For an immediate deep dive into the full protocols and data, including both summary statistics and well-level readouts,
-please refer to this **[Github repo](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
+please refer to this **[Github repo](https://github.com/OpenADMET/Octant_CYP_blog_post)** and **[HuggingFace dataset](https://huggingface.co/datasets/openadmet/Octant_CYP_inhibition_reactivity_blog_release)**.
 
 Importantly, **this is just the start** of a large-scale data generation campaign across these and other endpoints.
 Watch for an announcement in the next 2 weeks for an OpenADMET challenge using Octant-generated data.
@@ -441,7 +441,8 @@ Join the conversation on the [OpenADMET assay development Discord](https://disco
 
 ## Data Accessibility
 
-All datasets, blog post source code and assay protocols can be found on
+Datasets are available in parquet format on **[HuggingFace](https://huggingface.co/datasets/openadmet/Octant_CYP_inhibition_reactivity_blog_release)**.
+Blog post source code and assay protocols can be found on
 **[Github](https://github.com/OpenADMET/Octant_CYP_blog_post)**.
 
 
