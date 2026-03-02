@@ -22,8 +22,6 @@ __pycache__/
 .venv/
 
 # R artifacts
-*.RDS
-*.rds
 *.Rdata
 *.Rhistory
 
