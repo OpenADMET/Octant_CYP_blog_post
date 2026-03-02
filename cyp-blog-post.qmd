@@ -23,7 +23,7 @@ format:
 
 :::{.doc-authors}
 Robert Warneford-Thomson [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4521-0568),
-Steven Edgar,
+Steven Edgar [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0001-5778-768X),
 Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457),
 Naomi Handly [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0007-1480-6741),
 Pat Walters [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0003-2860-7958),
