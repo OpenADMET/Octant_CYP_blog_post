@@ -35,6 +35,8 @@ react_summary <- reactivity_raw |>
     pct_remaining = (treatment / control) * 100
   )
 
+write_tsv(react_summary, here("data", "reactivity_processed.tsv"))
+
 # --- hit counts for hexbin annotations ---
 hit_counts <- react_summary |>
   filter(!is.na(log2fc)) |>
