@@ -572,27 +572,6 @@ out = [_unbold_fig_refs(line) for line in out]
 # Content patches (changes not in the Google Doc source)
 # ---------------------------------------------------------------------------
 
-# Add HuggingFace dataset links alongside GitHub references
-HF_LINK = f"**[HuggingFace]({HF_URL})**"
-HF_DATASET_LINK = f"**[HuggingFace dataset]({HF_URL})**"
-GITHUB_LINK = f"**[GitHub]({GITHUB_URL})**"
-GITHUB_REPO_LINK = f"**[Github repo]({GITHUB_URL})**"
-
-out = [
-    line.replace(
-        f"{GITHUB_LINK} and includes the",
-        f"{GITHUB_LINK} and {HF_LINK} and includes the",
-    ).replace(
-        f"{GITHUB_REPO_LINK}.",
-        f"{GITHUB_REPO_LINK} and {HF_DATASET_LINK}.",
-    ).replace(
-        "All datasets, blog post source code and assay protocols can be found on",
-        f"Datasets are available in parquet format on {HF_LINK}.\n"
-        "Blog post source code and assay protocols can be found on",
-    )
-    for line in out
-]
-
 # Collapse runs of 2+ blank lines to 1
 final: list[str] = []
 blank_count = 0
