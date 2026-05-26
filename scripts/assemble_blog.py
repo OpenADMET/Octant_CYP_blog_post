@@ -62,11 +62,9 @@ format:
 AUTHOR_LINE = (
     ":::{.doc-authors}\n"
     "Robert Warneford-Thomson [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4521-0568),\n"
+    "Scott Simpkins [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-5997-2838),\n"
     "Steven Edgar [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0001-5778-768X),\n"
-    "Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457),\n"
-    "Naomi Handly [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0007-1480-6741),\n"
-    "Pat Walters [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0003-2860-7958),\n"
-    "Sri Kosuri [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-4661-0600)"
+    "Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457)"
     "\n:::"
 )
 
