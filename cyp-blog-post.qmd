@@ -427,7 +427,7 @@ The authors would like to acknowledge experimental data, analysis and scientific
 This work was supported by funding from ARPA-H and the Astera Foundation.
 
 We would also like to acknowledge technical support for our CYP assay development from SCIEX and Discovery Life
-Sciences.
+Sciences, and technical advice from Neal Liddle at Iambic Therapeutics.
 
 ## Get Involved
 
@@ -449,7 +449,7 @@ Blog post source code and assay protocols can be found on
 
 ::::{.doc-version}
 :::{.doc-version-left}
-Last updated: March 03, 2026
+Last updated: May 26, 2026
 :::
 :::{.doc-version-right}
 Built with ❤️ and [Quarto](https://quarto.org)
