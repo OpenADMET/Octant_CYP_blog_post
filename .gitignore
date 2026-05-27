@@ -39,3 +39,6 @@ data/inhibition_drc-plots/
 .claude/
 .serena/
 _site/
+
+# Internal testimonial draft — kept locally, not published
+DLS_testimonial.txt
