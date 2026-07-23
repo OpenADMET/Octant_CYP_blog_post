@@ -1,5 +1,7 @@
 # CYP Data Engine
 
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21504217-blue.svg)](https://doi.org/10.5281/zenodo.21504217)
+
 Code and data to reproduce the figures in the CYP Data Engine blog post.
 
 ## Prerequisites
