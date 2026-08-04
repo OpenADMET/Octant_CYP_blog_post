@@ -28,6 +28,8 @@ Steven Edgar [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0009-0001-5778-7
 Hugo MacDermott-Opeskin [{{< ai orcid color=#a6ce39 >}}](https://orcid.org/0000-0002-7393-7457)
 :::
 
+[![DOI](https://img.shields.io/badge/DOI-10.57967%2Fhf%2F9647-blue.svg)](https://doi.org/10.57967/hf/9647)
+
 {{< include post/figures/banner_drc_animation.qmd >}}
 
 For those new to [OpenADMET](https://openadmet.ghost.io/what-is-openadmet/), we are an open-science consortium
@@ -455,4 +457,3 @@ Last updated: May 26, 2026
 Built with ❤️ and [Quarto](https://quarto.org)
 :::
 ::::
-
