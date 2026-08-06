@@ -457,3 +457,12 @@ Last updated: May 26, 2026
 Built with ❤️ and [Quarto](https://quarto.org)
 :::
 ::::
+
+::::{.doc-version}
+:::{.doc-version-left}
+© 2026 OpenADMET
+:::
+:::{.doc-version-right}
+Code licensed [Apache 2.0](https://github.com/OpenADMET/Octant_CYP_blog_post/blob/main/LICENSE) · Data licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+:::
+::::

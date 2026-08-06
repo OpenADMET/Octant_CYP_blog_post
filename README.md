@@ -65,3 +65,8 @@ All data is in `data/`:
 | `tdi_drc_points.tsv`    | Raw DRC measurement points for TDI compounds                                                                     | 144    |
 | `tdi_pic50_shift.tsv`   | pIC50 shift estimates (±preincubation) for TDI compounds                                                         | 6      |
 | `inhibition_drc-plots/` | Dose-response curve images (1,343 PNGs) used as tooltips in Figure 3                                             | —      |
+
+## License
+
+- **Code** (R, Python, Quarto source): [Apache License 2.0](LICENSE)
+- **Data** (`data/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), matching the [HuggingFace release](https://huggingface.co/datasets/openadmet/Octant_CYP_inhibition_reactivity_blog_release)
